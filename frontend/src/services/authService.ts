@@ -50,17 +50,7 @@ export const registerStudent = async (params: RegisterParams): Promise<UserProfi
   const { fullName, email, password } = params;
 
   if (!auth || !db) {
-    // Demo fallback mode if Firebase credentials are not configured in .env
-    const mockUid = `demo-${Date.now()}`;
-    const mockProfile: UserProfile = {
-      uid: mockUid,
-      fullName: fullName.trim(),
-      email: email.trim().toLowerCase(),
-      role: 'student',
-      createdAt: new Date().toISOString(),
-    };
-    localStorage.setItem('arena_demo_user', JSON.stringify(mockProfile));
-    return mockProfile;
+    throw new Error('Firebase Authentication is not configured. Please check your environment settings.');
   }
 
   // 1. Create Firebase Auth user
@@ -92,20 +82,7 @@ export const loginStudent = async (params: LoginParams): Promise<User | UserProf
   const { email, password } = params;
 
   if (!auth) {
-    // Demo fallback mode if Firebase credentials are not configured in .env
-    const savedDemo = localStorage.getItem('arena_demo_user');
-    if (savedDemo) {
-      return JSON.parse(savedDemo);
-    }
-    const mockProfile: UserProfile = {
-      uid: `demo-user-123`,
-      fullName: 'Student User',
-      email: email.trim().toLowerCase(),
-      role: 'student',
-      createdAt: new Date().toISOString(),
-    };
-    localStorage.setItem('arena_demo_user', JSON.stringify(mockProfile));
-    return mockProfile;
+    throw new Error('Firebase Authentication is not configured. Please check your environment settings.');
   }
 
   const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
@@ -119,7 +96,6 @@ export const logoutStudent = async (): Promise<void> => {
   if (auth) {
     await signOut(auth);
   }
-  localStorage.removeItem('arena_demo_user');
 };
 
 /**
@@ -127,11 +103,7 @@ export const logoutStudent = async (): Promise<void> => {
  */
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
   if (!db) {
-    const savedDemo = localStorage.getItem('arena_demo_user');
-    if (savedDemo) {
-      return JSON.parse(savedDemo);
-    }
-    return null;
+    throw new Error('Firebase Firestore is not configured. Please check your environment settings.');
   }
 
   try {
@@ -155,13 +127,8 @@ export const subscribeToAuthState = (
   callback: (user: User | null) => void
 ): (() => void) => {
   if (!auth) {
-    const savedDemo = localStorage.getItem('arena_demo_user');
-    if (savedDemo) {
-      callback({ uid: JSON.parse(savedDemo).uid, email: JSON.parse(savedDemo).email } as any);
-    } else {
-      callback(null);
-    }
-    return () => {};
+    callback(null);
+    return () => { };
   }
 
   return onAuthStateChanged(auth, callback);

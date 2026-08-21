@@ -11,7 +11,7 @@ export class ApiService {
 
   public static async get<T = any>(endpoint: string, options?: GetOptions): Promise<T> {
     const url = `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-    
+
     const fetcher = async () => {
       try {
         const response = await fetch(url, {

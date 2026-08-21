@@ -4,6 +4,17 @@ from app.core.config import settings
 from app.api.v1.router import api_router
 from app.core.security_middleware import SecurityMiddleware
 
+import firebase_admin
+import logging
+
+try:
+    firebase_admin.initialize_app()
+    logging.info("Firebase Admin initialized successfully.")
+except ValueError:
+    pass # Already initialized
+except Exception as e:
+    logging.warning(f"Failed to initialize Firebase Admin: {e}. Backend authentication will require GOOGLE_APPLICATION_CREDENTIALS.")
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="ARENA - Student Competitive Learning and Placement-Preparation Platform API",
