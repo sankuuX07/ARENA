@@ -74,7 +74,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Puzzle,
     description: 'Brain teasers, analytical puzzles, and problem-solving challenges',
     category: 'prep',
-    isComingSoon: true,
+    isComingSoon: false,
   },
   {
     id: 'technical',
