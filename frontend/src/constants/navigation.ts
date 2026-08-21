@@ -94,7 +94,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: ClipboardCheck,
     description: 'Placement-style timed tests and company hiring simulation exams',
     category: 'assessment',
-    isComingSoon: true,
+    isComingSoon: false,
   },
   {
     id: 'ai-interview',
