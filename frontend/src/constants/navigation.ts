@@ -144,6 +144,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Trophy,
     description: 'Global and cohort rankings based on solved challenges and metrics',
     category: 'social',
-    isComingSoon: true,
+    isComingSoon: false,
   },
 ];
