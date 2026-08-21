@@ -64,7 +64,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Brain,
     description: 'Quantitative, logical reasoning, and verbal practice modules',
     category: 'prep',
-    isComingSoon: true,
+    isComingSoon: false,
   },
   {
     id: 'puzzles',
