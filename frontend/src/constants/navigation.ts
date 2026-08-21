@@ -54,7 +54,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: MessageSquare,
     description: 'AI-assisted speaking, presentation, and language fluency training',
     category: 'prep',
-    isComingSoon: true,
+    isComingSoon: false,
   },
   {
     id: 'aptitude',
