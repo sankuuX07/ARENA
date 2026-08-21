@@ -5,7 +5,6 @@ import {
   Puzzle,
   Code2,
   ClipboardCheck,
-  Video,
   FileText,
   Trophy,
   UserCheck,
@@ -116,16 +115,7 @@ export const NAV_ITEMS: NavItem[] = [
     category: 'assessment',
     isComingSoon: false,
   },
-  {
-    id: 'mock-interview',
-    path: '/mock-interview',
-    label: 'Mock Interview',
-    iconName: 'Video',
-    icon: Video,
-    description: 'AI video/voice interview simulator with real-time feedback',
-    category: 'assessment',
-    isComingSoon: true,
-  },
+
   {
     id: 'resume',
     path: '/resume',
