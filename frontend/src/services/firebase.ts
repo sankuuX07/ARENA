@@ -11,8 +11,12 @@ let storage: FirebaseStorage | undefined;
 
 const config = getFirebaseConfig();
 
-// Only initialize Firebase if API key is populated
-if (config.apiKey && config.apiKey !== 'your-firebase-api-key') {
+const missingKeys = Object.entries(config)
+  .filter(([, v]) => !v)
+  .map(([k]) => k);
+
+if (missingKeys.length === 0) {
+  // All required Firebase config values are present — initialize.
   try {
     if (!getApps().length) {
       app = initializeApp(config);
@@ -24,10 +28,15 @@ if (config.apiKey && config.apiKey !== 'your-firebase-api-key') {
     storage = getStorage(app);
     console.log('[Firebase] Initialized successfully with Auth, Firestore, and Storage');
   } catch (error) {
-    console.warn('[Firebase] Initialization skipped or encountered error:', error);
+    console.error('[Firebase] Initialization failed:', error);
   }
 } else {
-  console.info('[Firebase] Config placeholder detected. Firebase will initialize once valid credentials are provided in .env');
+  console.error(
+    '[Firebase] MISSING CONFIGURATION — Login and Create Account will NOT work.\n' +
+    'Create frontend/.env and set these variables:\n' +
+    missingKeys.map(k => `  VITE_${k.replace(/([A-Z])/g, '_$1').toUpperCase()} = <your value>`).join('\n') +
+    '\nSee frontend/.env.example for the full template.'
+  );
 }
 
 export { app, auth, db, storage };

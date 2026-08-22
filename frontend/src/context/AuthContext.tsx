@@ -13,6 +13,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 interface AuthContextType {
   currentUser: User | any | null;
   userProfile: UserProfile | null;
+  /** True only during the initial Firebase auth-state check on app load. */
   loading: boolean;
   isAuthenticated: boolean;
   login: (params: LoginParams) => Promise<void>;
@@ -26,17 +27,33 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | any | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+
+  /**
+   * `initializing` is true ONLY during the very first auth-state check on
+   * app boot. It becomes false permanently once Firebase resolves the initial
+   * state. It is deliberately separate from per-operation loading flags so
+   * that login/register errors are visible and the app is never permanently
+   * stuck behind a spinner.
+   */
+  const [initializing, setInitializing] = useState<boolean>(true);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthState(async (user) => {
-      setLoading(true);
       if (user) {
         setCurrentUser(user);
-        const profile = await getUserProfile(user.uid);
-        if (profile) {
-          setUserProfile(profile);
-        } else {
+        try {
+          const profile = await getUserProfile(user.uid);
+          setUserProfile(
+            profile || {
+              uid: user.uid,
+              fullName: user.displayName || user.email?.split('@')[0] || 'Student',
+              email: user.email || '',
+              role: 'student',
+            }
+          );
+        } catch {
+          // Profile fetch failed — use a minimal fallback so the user is
+          // still considered authenticated.
           setUserProfile({
             uid: user.uid,
             fullName: user.displayName || user.email?.split('@')[0] || 'Student',
@@ -48,7 +65,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCurrentUser(null);
         setUserProfile(null);
       }
-      setLoading(false);
+      // Mark initialization complete after the first callback fires.
+      setInitializing(false);
     });
 
     return () => unsubscribe();
@@ -58,57 +76,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserProfile(updated);
   };
 
-  const login = async (params: LoginParams) => {
-    setLoading(true);
-    try {
-      const userOrProfile = await loginStudent(params);
-      if ('uid' in userOrProfile && 'fullName' in userOrProfile) {
-        setCurrentUser({ uid: userOrProfile.uid, email: userOrProfile.email });
-        setUserProfile(userOrProfile as UserProfile);
-      } else {
-        const firebaseUser = userOrProfile as User;
-        setCurrentUser(firebaseUser);
-        const profile = await getUserProfile(firebaseUser.uid);
-        setUserProfile(
-          profile || {
-            uid: firebaseUser.uid,
-            fullName: firebaseUser.email?.split('@')[0] || 'Student',
-            email: firebaseUser.email || '',
-            role: 'student',
-          }
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
+  /**
+   * Login: calls Firebase signInWithEmailAndPassword and immediately sets
+   * currentUser from the returned credential so the ProtectedRoute guard
+   * sees an authenticated user before React Router navigates.
+   *
+   * onAuthStateChanged will fire shortly after and update the profile.
+   * Throws on failure — the calling component must catch and display the error.
+   */
+  const login = async (params: LoginParams): Promise<void> => {
+    const firebaseUser = await loginStudent(params);
+    // Eagerly set currentUser so isAuthenticated becomes true synchronously
+    // before the navigate() in the calling component fires.  onAuthStateChanged
+    // will re-run shortly and may update userProfile, but that is non-blocking.
+    setCurrentUser(firebaseUser);
   };
 
-  const register = async (params: RegisterParams) => {
-    setLoading(true);
-    try {
-      const profile = await registerStudent(params);
-      setUserProfile(profile);
-      setCurrentUser({ uid: profile.uid, email: profile.email });
-    } finally {
-      setLoading(false);
-    }
+  /**
+   * Register: creates the Firebase account + Firestore profile, then eagerly
+   * sets currentUser so the ProtectedRoute guard sees an authenticated user
+   * before React Router navigates.
+   * Throws on failure — the calling component must catch and display the error.
+   */
+  const register = async (params: RegisterParams): Promise<void> => {
+    const profile = await registerStudent(params);
+    // Eagerly set both currentUser (minimal shape) and userProfile so the
+    // dashboard can render immediately while onAuthStateChanged catches up.
+    setCurrentUser({ uid: profile.uid, email: profile.email });
+    setUserProfile(profile);
   };
 
   const logout = async () => {
-    setLoading(true);
-    try {
-      await logoutStudent();
-      setCurrentUser(null);
-      setUserProfile(null);
-    } finally {
-      setLoading(false);
-    }
+    await logoutStudent();
+    // Eagerly clear state so protected routes block immediately.
+    setCurrentUser(null);
+    setUserProfile(null);
+    // onAuthStateChanged will also fire with null and confirm the state.
   };
 
   const value: AuthContextType = {
     currentUser,
     userProfile,
-    loading,
+    loading: initializing,
     isAuthenticated: Boolean(currentUser),
     login,
     register,
@@ -116,7 +125,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateUserProfileState,
   };
 
-  if (loading) {
+  // Show a blocking spinner ONLY during the initial Firebase auth check on
+  // app boot. After that, per-operation loading is managed by each component.
+  if (initializing) {
     return (
       <div
         style={{
