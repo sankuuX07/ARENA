@@ -11,6 +11,9 @@ let storage: FirebaseStorage | undefined;
 
 const config = getFirebaseConfig();
 
+console.log('[Firebase Debug] API Key received length:', config.apiKey ? config.apiKey.length : 0);
+console.log('[Firebase Debug] API Key prefix:', config.apiKey ? config.apiKey.substring(0, 5) : 'NONE');
+
 const isInvalid = (v: any) => !v || (typeof v === 'string' && v.startsWith('PASTE_YOUR_'));
 
 const missingKeys = Object.entries(config)
