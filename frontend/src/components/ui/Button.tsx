@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { buttonHover } from '../../utils/motion';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -30,10 +32,14 @@ export const Button: React.FC<ButtonProps> = ({
   const combinedClasses = `${baseClasses} ${widthClass} ${className}`.trim();
 
   return (
-    <button
+    <motion.button
       className={combinedClasses}
       disabled={disabled || loading}
-      {...props}
+      variants={buttonHover}
+      initial="rest"
+      whileHover={disabled || loading ? "rest" : "hover"}
+      whileTap={disabled || loading ? "rest" : "tap"}
+      {...props as any}
     >
       {loading ? (
         <span className="spinner-icon spin" style={{ display: 'inline-block', width: 16, height: 16 }}>
@@ -44,6 +50,6 @@ export const Button: React.FC<ButtonProps> = ({
       )}
       <span>{children}</span>
       {!loading && icon && iconPosition === 'right' && <span className="btn-icon">{icon}</span>}
-    </button>
+    </motion.button>
   );
 };

@@ -6,6 +6,9 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Shield, Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { slideUp } from '../utils/motion';
+import { AuthBackground3D } from '../components/3d/AuthBackground3D';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -63,10 +66,20 @@ export const LoginPage: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '3.5rem 1.5rem',
-        minHeight: '75vh',
+        minHeight: '100vh',
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
-      <Card style={{ maxWidth: 440, width: '100%', padding: '2.5rem 2rem' }}>
+      <AuthBackground3D />
+      
+      <motion.div
+        variants={slideUp}
+        initial="hidden"
+        animate="visible"
+        style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 1 }}
+      >
+        <Card style={{ padding: '2.5rem 2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div
             style={{
@@ -218,6 +231,7 @@ export const LoginPage: React.FC = () => {
           </Link>
         </div>
       </Card>
+      </motion.div>
     </div>
   );
 };

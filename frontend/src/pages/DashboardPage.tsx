@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   getDashboardSummary,
@@ -24,6 +24,10 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { Award, Trophy, CheckCircle2, Flame, AlertCircle, RefreshCw } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { staggerContainer, staggerItem } from '../utils/motion';
+
+const DashboardHero3D = React.lazy(() => import('../components/3d/DashboardHero3D').then(m => ({ default: m.DashboardHero3D })));
 
 export const DashboardPage: React.FC = () => {
   const { userProfile } = useAuth();
@@ -86,7 +90,17 @@ export const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="dashboard-page-container" style={{ maxWidth: 1280, margin: '0 auto', width: '100%' }}>
+    <motion.div 
+      className="dashboard-page-container" 
+      style={{ maxWidth: 1280, margin: '0 auto', width: '100%', position: 'relative' }}
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+    >
+      <Suspense fallback={null}>
+        <DashboardHero3D />
+      </Suspense>
+
       {/* Dynamic Welcome Greeting */}
       <DashboardHeader profile={userProfile} />
 
@@ -94,7 +108,7 @@ export const DashboardPage: React.FC = () => {
       <ProfileCompletionCard profile={userProfile} />
 
       {/* 4 Stat Cards Grid (Connected to Real Progress Engine) */}
-      <div className="stat-card-grid">
+      <motion.div className="stat-card-grid" variants={staggerItem}>
         <StatCard
           label="Overall Score"
           value={stats ? `${stats.overallScore}` : '0'}
@@ -123,10 +137,10 @@ export const DashboardPage: React.FC = () => {
           icon={<Flame size={20} style={{ color: 'var(--warning)' }} />}
           badge={<Badge variant="warning">{stats?.streakDays || 0} 🔥</Badge>}
         />
-      </div>
+      </motion.div>
 
       {/* Main Dashboard Layout Grid */}
-      <div className="dashboard-grid">
+      <motion.div className="dashboard-grid" variants={staggerItem}>
         {/* Left Column (Span 8): Module Progress, Quick Actions, Recommendations */}
         <div className="dash-col-8">
           <div className="dashboard-grid">
@@ -145,7 +159,7 @@ export const DashboardPage: React.FC = () => {
           <RecentActivityList activities={activities} />
           <PerformanceOverviewCard />
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

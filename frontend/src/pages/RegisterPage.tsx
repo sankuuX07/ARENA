@@ -6,6 +6,9 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Shield, User as UserIcon, Mail, Lock, UserPlus, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { slideUp } from '../utils/motion';
+import { AuthBackground3D } from '../components/3d/AuthBackground3D';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -80,10 +83,20 @@ export const RegisterPage: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '3.5rem 1.5rem',
-        minHeight: '80vh',
+        minHeight: '100vh',
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
-      <Card style={{ maxWidth: 480, width: '100%', padding: '2.5rem 2rem' }}>
+      <AuthBackground3D />
+
+      <motion.div
+        variants={slideUp}
+        initial="hidden"
+        animate="visible"
+        style={{ width: '100%', maxWidth: 480, position: 'relative', zIndex: 1 }}
+      >
+        <Card style={{ padding: '2.5rem 2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div
             style={{
@@ -323,6 +336,7 @@ export const RegisterPage: React.FC = () => {
           </Link>
         </div>
       </Card>
+      </motion.div>
     </div>
   );
 };

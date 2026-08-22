@@ -15,6 +15,8 @@ import {
   RefreshCw,
   Sparkles,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { staggerContainer, staggerItem, fadeIn } from '../utils/motion';
 
 export const LeaderboardPage: React.FC = () => {
   const { currentUser, userProfile } = useAuth();
@@ -89,8 +91,14 @@ export const LeaderboardPage: React.FC = () => {
   const currentStudentRankNum = studentRankSummary?.rank;
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-      <PageHeader
+    <motion.div 
+      style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={fadeIn}>
+        <PageHeader
         title="Competitive Leaderboard"
         description="Compete with fellow ARENA students, solve practice challenges, and climb placement readiness ranks."
         icon={<Trophy size={24} />}
@@ -100,6 +108,7 @@ export const LeaderboardPage: React.FC = () => {
           </Badge>
         }
       />
+      </motion.div>
 
       {/* Logged-In Student Pinned Position Card */}
       {currentUser && (
@@ -187,7 +196,7 @@ export const LeaderboardPage: React.FC = () => {
 
       {/* Top 3 Podium Section */}
       {leaderboard.length > 0 && (
-        <div style={{ marginBottom: '2.5rem' }}>
+        <motion.div style={{ marginBottom: '2.5rem' }} variants={staggerItem}>
           <h2 className="section-title" style={{ fontSize: '1.25rem', marginBottom: '1rem', textAlign: 'center' }}>
             Top Percentile Champions
           </h2>
@@ -367,11 +376,12 @@ export const LeaderboardPage: React.FC = () => {
               </Card>
             ) : null}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Main Leaderboard Table / Standings */}
-      <Card>
+      <motion.div variants={staggerItem}>
+        <Card>
         <div className="arena-card-header" style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Award size={20} style={{ color: 'var(--primary)' }} />
@@ -404,8 +414,9 @@ export const LeaderboardPage: React.FC = () => {
                   const isCurrent = currentUser && currentUser.uid === entry.uid;
 
                   return (
-                    <tr
+                    <motion.tr
                       key={entry.uid}
+                      variants={staggerItem}
                       style={{
                         borderBottom: '1px solid var(--border-color)',
                         background: isCurrent ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
@@ -490,7 +501,7 @@ export const LeaderboardPage: React.FC = () => {
                       <td style={{ padding: '0.85rem 1rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-dim)' }}>
                         —
                       </td>
-                    </tr>
+                    </motion.tr>
                   );
                 })}
               </tbody>
@@ -498,6 +509,7 @@ export const LeaderboardPage: React.FC = () => {
           </div>
         )}
       </Card>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

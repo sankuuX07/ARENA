@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { NAV_ITEMS } from '../constants/navigation';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, User as UserIcon } from 'lucide-react';
@@ -43,7 +44,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {NAV_ITEMS.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <li key={item.id}>
+                    <motion.li 
+                      key={item.id}
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    >
                       <NavLink
                         to={item.path}
                         className={({ isActive }) =>
@@ -60,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           <span className="sidebar-badge">Soon</span>
                         )}
                       </NavLink>
-                    </li>
+                    </motion.li>
                   );
                 })}
               </ul>

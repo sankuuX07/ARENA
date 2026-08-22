@@ -14,6 +14,8 @@ import { recommendationService } from '../../services/recommendationService';
 import { AnalyticsOverview } from '../../types/analytics';
 import { StudentRecommendation } from '../../types/recommendation';
 import { BarChart2, RefreshCw } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { staggerContainer, staggerItem, fadeIn } from '../../utils/motion';
 
 export const StudentAnalyticsOverviewPage: React.FC = () => {
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
@@ -61,8 +63,14 @@ export const StudentAnalyticsOverviewPage: React.FC = () => {
   if (!overview) return null;
 
   return (
-    <div className="page-container">
-      <PageHeader 
+    <motion.div 
+      className="page-container"
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={fadeIn}>
+        <PageHeader 
         title="Unified Student Analytics" 
         subtitle="Your complete learning and placement preparation progress."
         icon={<BarChart2 size={28} />}
@@ -77,9 +85,13 @@ export const StudentAnalyticsOverviewPage: React.FC = () => {
           </Button>
         }
       />
+      </motion.div>
 
       {/* Top Section: Score, Coverage, and Quick Insights */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <motion.div 
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}
+        variants={staggerItem}
+      >
         <AnalyticsScoreCard 
           title="Overall Preparation Score"
           score={overview.overallScore}
@@ -93,16 +105,16 @@ export const StudentAnalyticsOverviewPage: React.FC = () => {
           strengths={overview.strengths} 
           improvementAreas={overview.improvementAreas} 
         />
-      </div>
+      </motion.div>
 
       {nextAction && (
-        <div style={{ marginBottom: '2rem' }}>
+        <motion.div style={{ marginBottom: '2rem' }} variants={staggerItem}>
           <h2 style={{ marginBottom: '1rem' }}>Personalized Next Steps</h2>
           <NextBestActionCard recommendation={nextAction} />
-        </div>
+        </motion.div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+      <motion.div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '1.5rem', marginBottom: '2rem' }} variants={staggerItem}>
         {/* Main Categories Grid */}
         <div>
           <h2 style={{ marginBottom: '1.5rem' }}>Category Breakdown</h2>
@@ -122,11 +134,11 @@ export const StudentAnalyticsOverviewPage: React.FC = () => {
           <AnalyticsInsightsCard insights={overview.insights} />
           <AnalyticsActivityTimeline activities={overview.recentActivity} />
         </div>
-      </div>
+      </motion.div>
       
-      <div style={{ textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+      <motion.div style={{ textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-muted)' }} variants={fadeIn}>
         Last updated: {new Date(overview.lastUpdated).toLocaleString()}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

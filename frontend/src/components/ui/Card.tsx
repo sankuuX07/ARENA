@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { cardHover } from '../../utils/motion';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -16,8 +18,15 @@ export const Card: React.FC<CardProps> = ({
   const combinedClasses = `arena-card ${liftClass} ${className}`.trim();
 
   return (
-    <div className={combinedClasses} {...props}>
+    <motion.div 
+      className={combinedClasses} 
+      variants={hoverLift ? cardHover : undefined}
+      initial={hoverLift ? "rest" : undefined}
+      whileHover={hoverLift ? "hover" : undefined}
+      whileTap={hoverLift ? "tap" : undefined}
+      {...props as any}
+    >
       {children}
-    </div>
+    </motion.div>
   );
 };
