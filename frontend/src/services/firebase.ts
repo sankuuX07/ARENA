@@ -11,8 +11,13 @@ let storage: FirebaseStorage | undefined;
 
 const config = getFirebaseConfig();
 
-console.log('[Firebase Debug] API Key received length:', config.apiKey ? config.apiKey.length : 0);
-console.log('[Firebase Debug] API Key prefix:', config.apiKey ? config.apiKey.substring(0, 5) : 'NONE');
+console.log('API KEY: ' + (config.apiKey ? 'PRESENT' : 'MISSING'));
+console.log('AUTH DOMAIN: ' + (config.authDomain ? 'PRESENT' : 'MISSING'));
+console.log('PROJECT ID: ' + (config.projectId ? 'PRESENT' : 'MISSING'));
+console.log('STORAGE BUCKET: ' + (config.storageBucket ? 'PRESENT' : 'MISSING'));
+console.log('MESSAGING SENDER ID: ' + (config.messagingSenderId ? 'PRESENT' : 'MISSING'));
+console.log('APP ID: ' + (config.appId ? 'PRESENT' : 'MISSING'));
+console.log('API KEY MATCHES FIREBASE WEB APP CONFIG: ' + (config.apiKey === 'AIzaSyBwOUdkBRdfqN_506GzdV_2k2gDTwvM' ? 'YES' : 'NO'));
 
 const isInvalid = (v: any) => !v || (typeof v === 'string' && v.startsWith('PASTE_YOUR_'));
 
