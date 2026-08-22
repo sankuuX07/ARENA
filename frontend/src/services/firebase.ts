@@ -11,8 +11,10 @@ let storage: FirebaseStorage | undefined;
 
 const config = getFirebaseConfig();
 
+const isInvalid = (v: any) => !v || (typeof v === 'string' && v.startsWith('PASTE_YOUR_'));
+
 const missingKeys = Object.entries(config)
-  .filter(([, v]) => !v)
+  .filter(([, v]) => isInvalid(v))
   .map(([k]) => k);
 
 if (missingKeys.length === 0) {
