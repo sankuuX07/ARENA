@@ -6,22 +6,21 @@ const puppeteer = require('puppeteer');
   const page = await browser.newPage();
   
   page.on('console', msg => console.log('BROWSER CONSOLE:', msg.text()));
+  page.on('request', request => {
+    if (request.url().includes('identitytoolkit.googleapis.com')) {
+      console.log('AUTH REQUEST URL:', request.url());
+    }
+  });
   
-  console.log('Navigating to signup page...');
+  console.log('Navigating to register page...');
   try {
-    await page.goto('http://localhost:5173/signup', { waitUntil: 'networkidle2', timeout: 10000 });
+    await page.goto('http://localhost:5173/register', { waitUntil: 'networkidle2', timeout: 10000 });
     
     console.log('Filling form...');
-    // The exact selectors depend on the app, I will try standard ones.
-    await page.type('input[type="text"]', 'Test User');
-    await page.type('input[type="email"]', 'test@example.com');
-    await page.type('input[type="password"]', 'password123');
-    
-    // Check if there's a confirm password
-    const confirmPass = await page.$('input[name="confirmPassword"]');
-    if (confirmPass) {
-        await page.type('input[name="confirmPassword"]', 'password123');
-    }
+    await page.type('#register-fullname', 'Test User');
+    await page.type('#register-email', 'test999@example.com');
+    await page.type('#register-password', 'password123');
+    await page.type('#register-confirm-password', 'password123');
     
     console.log('Submitting...');
     await page.click('button[type="submit"]');

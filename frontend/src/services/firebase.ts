@@ -28,9 +28,11 @@ const missingKeys = Object.entries(config)
 if (missingKeys.length === 0) {
   // All required Firebase config values are present — initialize.
   try {
+    console.log('Number of apps before init: ' + getApps().length);
     if (!getApps().length) {
       app = initializeApp(config);
     } else {
+      console.log('Using existing app:', getApps()[0].options);
       app = getApps()[0];
     }
     auth = getAuth(app);
