@@ -8,7 +8,16 @@ import {
   registerStudent,
   logoutStudent,
 } from '../services/authService';
+import {
+  registerLocalStudent,
+  loginLocalStudent,
+  logoutLocalStudent,
+  getLocalUserProfile,
+  getLocalSession,
+} from '../services/localAuth';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+
+const isLocalAuth = import.meta.env.VITE_AUTH_MODE === 'local';
 
 interface AuthContextType {
   currentUser: User | any | null;
@@ -38,6 +47,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [initializing, setInitializing] = useState<boolean>(true);
 
   useEffect(() => {
+    if (isLocalAuth) {
+      console.log('// TEMPORARY DEVELOPMENT AUTH MODE - Using Local Auth');
+      // Local Auth Flow
+      const initLocalAuth = async () => {
+        const session = getLocalSession();
+        if (session) {
+          setCurrentUser(session as any);
+          try {
+            const profile = await getLocalUserProfile(session.uid);
+            setUserProfile(
+              profile || {
+                uid: session.uid,
+                fullName: session.email?.split('@')[0] || 'Student',
+                email: session.email || '',
+                role: 'student',
+              }
+            );
+          } catch {
+            setUserProfile({
+              uid: session.uid,
+              fullName: session.email?.split('@')[0] || 'Student',
+              email: session.email || '',
+              role: 'student',
+            });
+          }
+        } else {
+          setCurrentUser(null);
+          setUserProfile(null);
+        }
+        setInitializing(false);
+      };
+      
+      initLocalAuth();
+      return () => {}; // No subscription for local mode
+    }
+
     const unsubscribe = subscribeToAuthState(async (user) => {
       if (user) {
         setCurrentUser(user);
@@ -85,6 +130,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * Throws on failure — the calling component must catch and display the error.
    */
   const login = async (params: LoginParams): Promise<void> => {
+    if (isLocalAuth) {
+      const localUser = await loginLocalStudent(params);
+      setCurrentUser(localUser as any);
+      const profile = await getLocalUserProfile(localUser.uid);
+      if (profile) setUserProfile(profile);
+      return;
+    }
+
     const firebaseUser = await loginStudent(params);
     // Eagerly set currentUser so isAuthenticated becomes true synchronously
     // before the navigate() in the calling component fires.  onAuthStateChanged
@@ -99,6 +152,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * Throws on failure — the calling component must catch and display the error.
    */
   const register = async (params: RegisterParams): Promise<void> => {
+    if (isLocalAuth) {
+      const profile = await registerLocalStudent(params);
+      setCurrentUser({ uid: profile.uid, email: profile.email });
+      setUserProfile(profile);
+      return;
+    }
+
     const profile = await registerStudent(params);
     // Eagerly set both currentUser (minimal shape) and userProfile so the
     // dashboard can render immediately while onAuthStateChanged catches up.
@@ -107,6 +167,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    if (isLocalAuth) {
+      await logoutLocalStudent();
+      setCurrentUser(null);
+      setUserProfile(null);
+      return;
+    }
+
     await logoutStudent();
     // Eagerly clear state so protected routes block immediately.
     setCurrentUser(null);
