@@ -13,7 +13,7 @@ export const registerLocalStudent = async (params: RegisterParams): Promise<User
     throw new Error('Name, email, and password are required.');
   }
 
-  if (password !== confirmPassword) {
+  if (confirmPassword !== undefined && password !== confirmPassword) {
     throw new Error('Passwords do not match.');
   }
 
