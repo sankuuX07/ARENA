@@ -150,10 +150,12 @@ const getModulePath = (id: string): string => {
 export const getDashboardSummary = async (profile: UserProfile | null) => {
   const uid = profile?.uid || 'guest';
 
-  // Fetch real Firestore Progress Summary & Recent Activity list
-  const progressSummary: ProgressSummary = await getProgressSummary(uid);
-  const rawActivities: ActivityRecord[] = await getRecentActivities(uid, 5);
-  const rankSummary = await getStudentRank(uid);
+  // Fetch real Firestore Progress Summary & Recent Activity list in parallel
+  const [progressSummary, rawActivities, rankSummary] = await Promise.all([
+    getProgressSummary(uid),
+    getRecentActivities(uid, 5),
+    getStudentRank(uid)
+  ]);
 
   const stats: DashboardStats = {
     overallScore: progressSummary.totalScore,

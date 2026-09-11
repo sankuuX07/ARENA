@@ -49,8 +49,8 @@ async def generate_problem(request: ProblemGenerationRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Unable to generate problem at this time.")
 
-@router.post("/submissions", response_model=CodingSubmissionResponse)
-async def submit_solution(
+@router.post("/coding-submissions", response_model=CodingSubmissionResponse)
+async def submit_coding_solution(
     request: CodingSubmissionRequest,
     uid: str = Depends(verify_firebase_token)
 ):

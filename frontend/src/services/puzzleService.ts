@@ -106,7 +106,7 @@ export const generatePuzzleProblem = async (request: ProblemGenerationRequest): 
 };
 
 export const submitCodingSolution = async (request: CodingSubmissionRequest): Promise<CodingSubmissionResponse> => {
-  return await ApiService.post<CodingSubmissionResponse>('/puzzles/submissions', request);
+  return await ApiService.post<CodingSubmissionResponse>('/puzzles/coding-submissions', request);
 };
 
 export const getSubmissionHistory = async (): Promise<CodingSubmissionResponse[]> => {
