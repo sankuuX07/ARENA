@@ -15,54 +15,54 @@ import {
 class AnalyticsService {
   async getOverview(): Promise<AnalyticsOverview> {
     const response = await api.get('/analytics/overview');
-    return response.data;
+    return response;
   }
 
   async refreshOverview(): Promise<AnalyticsOverview> {
     const response = await api.post('/analytics/refresh');
     // Clear cache to ensure subsequent GETs get fresh data
     clearCache('analytics');
-    return response.data;
+    return response;
   }
 
   async getCommunicationAnalytics(): Promise<CommunicationAnalytics> {
     const response = await api.get('/analytics/communication');
-    return response.data;
+    return response;
   }
 
   async getAptitudeAnalytics(): Promise<AptitudeAnalytics> {
     const response = await api.get('/analytics/aptitude');
-    return response.data;
+    return response;
   }
 
   async getCodingAnalytics(): Promise<CodingAnalytics> {
     const response = await api.get('/analytics/coding');
-    return response.data;
+    return response;
   }
 
   async getTechnicalAnalytics(): Promise<TechnicalAnalytics> {
     const response = await api.get('/analytics/technical');
-    return response.data;
+    return response;
   }
 
   async getAssessmentAnalytics(): Promise<AssessmentAnalytics> {
     const response = await api.get('/analytics/assessments');
-    return response.data;
+    return response;
   }
 
   async getInterviewAnalytics(): Promise<InterviewAnalytics> {
     const response = await api.get('/analytics/interviews');
-    return response.data;
+    return response;
   }
 
   async getResumeAnalytics(): Promise<ResumeAnalytics> {
     const response = await api.get('/analytics/resume');
-    return response.data;
+    return response;
   }
 
   async getActivityTimeline(): Promise<AnalyticsActivity[]> {
     const response = await api.get('/analytics/activity');
-    return response.data;
+    return response;
   }
 }
 

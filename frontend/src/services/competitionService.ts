@@ -10,62 +10,62 @@ import {
 class CompetitionService {
   async getAll(): Promise<Competition[]> {
     const res = await api.get('/competitions/');
-    return res.data;
+    return res;
   }
 
   async getLive(): Promise<Competition[]> {
     const res = await api.get('/competitions/live');
-    return res.data;
+    return res;
   }
 
   async getUpcoming(): Promise<Competition[]> {
     const res = await api.get('/competitions/upcoming');
-    return res.data;
+    return res;
   }
 
   async getHistory(): Promise<CompetitionHistoryItem[]> {
     const res = await api.get('/competitions/history');
-    return res.data;
+    return res;
   }
 
   async getById(id: string): Promise<Competition> {
     const res = await api.get(`/competitions/${id}`);
-    return res.data;
+    return res;
   }
 
   async register(id: string): Promise<any> {
     const res = await api.post(`/competitions/${id}/register`);
-    return res.data;
+    return res;
   }
 
   async start(id: string): Promise<CompetitionSession> {
     const res = await api.post(`/competitions/${id}/start`);
-    return res.data;
+    return res;
   }
 
   async getSession(id: string): Promise<CompetitionSession> {
     const res = await api.get(`/competitions/${id}/session`);
-    return res.data;
+    return res;
   }
 
   async updateSession(id: string, answers: Record<string, any>): Promise<CompetitionSession> {
     const res = await api.patch(`/competitions/${id}/session`, answers);
-    return res.data;
+    return res;
   }
 
   async submit(id: string): Promise<CompetitionResult> {
     const res = await api.post(`/competitions/${id}/submit`);
-    return res.data;
+    return res;
   }
 
   async getResult(id: string): Promise<CompetitionResult> {
     const res = await api.get(`/competitions/${id}/result`);
-    return res.data;
+    return res;
   }
 
   async getLeaderboard(id: string): Promise<CompetitionLeaderboardResponse> {
     const res = await api.get(`/competitions/${id}/leaderboard`);
-    return res.data;
+    return res;
   }
 }
 

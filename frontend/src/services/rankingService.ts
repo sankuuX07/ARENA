@@ -7,6 +7,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { LeaderboardEntry, StudentRankSummary, ProgressSummary, UserProfile } from '../types';
+import { memoizePromise } from '../utils/cache';
 
 /**
  * Deterministic tie-breaking sorter for leaderboard entries
@@ -95,12 +96,13 @@ export const syncLeaderboardRecord = async (
  * Fetch public competitive leaderboard entries sorted deterministically with 1-based ranks
  */
 export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
-  if (!db) {
-    const localStr = localStorage.getItem('arena_leaderboard_data');
-    const localList: LeaderboardEntry[] = localStr ? JSON.parse(localStr) : [];
-    const sorted = sortLeaderboardEntries(localList);
-    return sorted.map((item, idx) => ({ ...item, rank: idx + 1 }));
-  }
+  return memoizePromise('leaderboard_data', async () => {
+    if (!db) {
+      const localStr = localStorage.getItem('arena_leaderboard_data');
+      const localList: LeaderboardEntry[] = localStr ? JSON.parse(localStr) : [];
+      const sorted = sortLeaderboardEntries(localList);
+      return sorted.map((item, idx) => ({ ...item, rank: idx + 1 }));
+    }
 
   try {
     const lbCol = collection(db, 'leaderboard');
@@ -120,6 +122,7 @@ export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
     console.error('[RankingService] Error fetching leaderboard:', error);
     return [];
   }
+  });
 };
 
 /**

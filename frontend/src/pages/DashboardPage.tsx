@@ -62,33 +62,6 @@ export const DashboardPage: React.FC = () => {
     loadDashboardData();
   }, [userProfile]);
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', minHeight: '50vh', alignItems: 'center', justifyContent: 'center' }}>
-        <LoadingSpinner message="Loading your ARENA Student Dashboard..." size={22} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ maxWidth: 500, margin: '3rem auto', textAlign: 'center' }}>
-        <div className="error-alert" style={{ marginBottom: '1.5rem' }}>
-          <div className="error-alert-header" style={{ justifyContent: 'center' }}>
-            <AlertCircle size={20} />
-            <span className="error-title">Dashboard Loading Error</span>
-          </div>
-          <div className="error-message" style={{ textAlign: 'center' }}>
-            {error}
-          </div>
-        </div>
-        <Button variant="primary" icon={<RefreshCw size={16} />} onClick={loadDashboardData}>
-          Try Again
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <motion.div 
       className="dashboard-page-container" 
@@ -107,8 +80,33 @@ export const DashboardPage: React.FC = () => {
       {/* Profile Completion Nudge Banner */}
       <ProfileCompletionCard profile={userProfile} />
 
-      {/* 4 Stat Cards Grid (Connected to Real Progress Engine) */}
-      <motion.div className="stat-card-grid" variants={staggerItem}>
+      {error && (
+        <div style={{ margin: '1rem 0' }}>
+          <div className="error-alert">
+            <div className="error-alert-header">
+              <AlertCircle size={20} />
+              <span className="error-title">Dashboard Loading Error</span>
+            </div>
+            <div className="error-message">
+              {error}
+            </div>
+          </div>
+          <Button variant="primary" icon={<RefreshCw size={16} />} onClick={loadDashboardData} style={{ marginTop: '1rem' }}>
+            Try Again
+          </Button>
+        </div>
+      )}
+
+      {loading && !error && (
+        <div style={{ display: 'flex', padding: '1rem', justifyContent: 'center', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
+          <LoadingSpinner message="Syncing your progress..." size={20} />
+        </div>
+      )}
+
+      {!error && (
+        <>
+          {/* 4 Stat Cards Grid (Connected to Real Progress Engine) */}
+          <motion.div className="stat-card-grid" variants={staggerItem} style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.3s' }}>
         <StatCard
           label="Overall Score"
           value={stats ? `${stats.overallScore}` : '0'}
@@ -160,6 +158,8 @@ export const DashboardPage: React.FC = () => {
           <PerformanceOverviewCard />
         </div>
       </motion.div>
+      </>
+      )}
     </motion.div>
   );
 };

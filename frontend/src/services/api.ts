@@ -9,8 +9,17 @@ export interface GetOptions {
 export class ApiService {
   private static baseUrl = getApiBaseUrl();
 
+  private static formatUrl(endpoint: string): string {
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    // If the endpoint doesn't already start with /v1, inject it
+    const finalEndpoint = cleanEndpoint.startsWith('/v1/') || cleanEndpoint === '/v1'
+      ? cleanEndpoint
+      : `/v1${cleanEndpoint}`;
+    return `${this.baseUrl}${finalEndpoint}`;
+  }
+
   public static async get<T = any>(endpoint: string, options?: GetOptions): Promise<T> {
-    const url = `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+    const url = this.formatUrl(endpoint);
 
     const fetcher = async () => {
       try {
@@ -42,7 +51,7 @@ export class ApiService {
   }
 
   public static async post<T = any>(endpoint: string, body?: any): Promise<T> {
-    const url = `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+    const url = this.formatUrl(endpoint);
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -64,7 +73,7 @@ export class ApiService {
   }
 
   public static async patch<T = any>(endpoint: string, body?: any): Promise<T> {
-    const url = `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+    const url = this.formatUrl(endpoint);
     try {
       const response = await fetch(url, {
         method: 'PATCH',
@@ -86,7 +95,7 @@ export class ApiService {
   }
 
   public static async delete<T = any>(endpoint: string, body?: any): Promise<T> {
-    const url = `${this.baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+    const url = this.formatUrl(endpoint);
     try {
       const response = await fetch(url, {
         method: 'DELETE',
