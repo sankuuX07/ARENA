@@ -23,8 +23,8 @@ class GeminiService:
         system_prompt = build_system_prompt(mode)
 
         if not self.api_key or self.api_key == "your_gemini_api_key_here":
-            logger.warning("[GeminiService] GEMINI_API_KEY is not configured. Returning fallback AI response.")
-            return self._generate_fallback_response(message, mode)
+            logger.warning("[GeminiService] GEMINI_API_KEY is not configured.")
+            raise ValueError("AI service not configured. Please configure the backend AI provider credentials.")
 
         try:
             import google.generativeai as genai
@@ -49,13 +49,11 @@ class GeminiService:
 
             if response and response.text:
                 return response.text.strip()
-            
-            return self._generate_fallback_response(message, mode)
+            raise ValueError("AI service temporarily unavailable.")
 
         except Exception as e:
             logger.error(f"[GeminiService] Error calling Gemini API: {e}")
-            # Fallback gracefully rather than crashing
-            return self._generate_fallback_response(message, mode)
+            raise ValueError("AI service temporarily unavailable.")
 
     async def generate_json_response(
         self,
@@ -67,7 +65,7 @@ class GeminiService:
         """
         if not self.api_key or self.api_key == "your_gemini_api_key_here":
             logger.warning("[GeminiService] GEMINI_API_KEY is not configured. Failing JSON generation.")
-            raise ValueError("Gemini API Key missing")
+            raise ValueError("AI service not configured. Please configure the backend AI provider credentials.")
 
         try:
             import google.generativeai as genai
@@ -91,36 +89,6 @@ class GeminiService:
             logger.error(f"[GeminiService] Error calling Gemini API for JSON: {e}")
             raise e
 
-    def _generate_fallback_response(self, message: str, mode: str) -> str:
-        """
-        Interactive fallback response for placement communication practice
-        when Gemini API key is unconfigured or unavailable.
-        """
-        msg_lower = message.lower().strip()
-
-        if "hello" in msg_lower or "hi" in msg_lower or "hey" in msg_lower:
-            return (
-                "Hello! Welcome to the ARENA AI Communication Practice Session. "
-                "I'm here to help you build speaking confidence and placement readiness. "
-                "To get started, tell me briefly about yourself and your career goals!"
-            )
-        elif "tell me about yourself" in msg_lower or "introduce" in msg_lower:
-            return (
-                "That's a classic interview question! When answering 'Tell me about yourself', "
-                "focus on your academic background, core technical skills, and key projects. "
-                "How would you summarize your top project in two sentences?"
-            )
-        elif "project" in msg_lower or "built" in msg_lower:
-            return (
-                "That sounds like a great project! Clearly articulating your technical contribution is crucial. "
-                "What was the biggest technical challenge you faced while building it, and how did you solve it?"
-            )
-
-        return (
-            f"Thank you for sharing that! Your response demonstrates good clarity. "
-            f"In a competitive interview, structuring your thoughts clearly helps interviewers follow your logic. "
-            f"What specific skills or topics would you like to practice next in your communication journey?"
-        )
-
-
 gemini_service = GeminiService()
+
+

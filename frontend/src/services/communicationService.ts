@@ -120,11 +120,8 @@ export const sendChatMessage = async (
     });
     aiResponseText = apiRes.message;
   } catch (err: any) {
-    console.warn('[CommunicationService] API request failed, using fallback:', err);
-    aiResponseText =
-      "Thank you for sharing that! Your response demonstrates good clarity. " +
-      "In a competitive interview, structuring your thoughts clearly helps interviewers follow your logic. " +
-      "What specific skills or topics would you like to practice next?";
+    console.warn('[CommunicationService] API request failed:', err);
+    aiResponseText = "AI service is not configured. Please configure the backend AI provider credentials.";
   }
 
   const aiMessage: CommunicationMessage = {

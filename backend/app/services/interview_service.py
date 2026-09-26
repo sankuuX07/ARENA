@@ -146,7 +146,7 @@ class InterviewService:
         try:
             import google.generativeai as genai
             if not gemini_service.api_key or gemini_service.api_key == "your_gemini_api_key_here":
-                return self._fallback_ai_response(session.mode, latest_input)
+                raise ValueError("AI service not configured. Please configure the backend AI provider credentials.")
 
             genai.configure(api_key=gemini_service.api_key)
             model = genai.GenerativeModel(
@@ -166,23 +166,10 @@ class InterviewService:
 
             if response and response.text:
                 return response.text.strip()
-            
-            return self._fallback_ai_response(session.mode, latest_input)
+            raise ValueError("AI service temporarily unavailable.")
 
         except Exception as e:
             print(f"[InterviewService] Gemini Error: {e}")
-            return self._fallback_ai_response(session.mode, latest_input)
-
-    def _fallback_ai_response(self, mode: str, text: str) -> str:
-        text_lower = text.lower()
-        if "hello" in text_lower or "ready" in text_lower:
-            if mode == "technical":
-                return "Welcome to the technical interview. Can you briefly explain a technical project you built recently?"
-            elif mode == "hr":
-                return "Welcome. To start, please tell me a little bit about yourself."
-            else:
-                return "Hello! Tell me about a time you faced a difficult challenge and how you handled it."
-        
-        return "Thank you for sharing that. Could you elaborate a bit more on the specific actions you took?"
+            raise ValueError("AI service temporarily unavailable.")
 
 interview_service = InterviewService()

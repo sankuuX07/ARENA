@@ -31,7 +31,12 @@ export class ApiService {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          let errorMsg = `HTTP error! status: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            if (errorData.detail) errorMsg = errorData.detail;
+          } catch(e) {}
+          throw new Error(errorMsg);
         }
 
         return (await response.json()) as T;
@@ -62,7 +67,12 @@ export class ApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMsg = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.detail) errorMsg = errorData.detail;
+        } catch(e) {}
+        throw new Error(errorMsg);
       }
 
       return (await response.json()) as T;
@@ -84,7 +94,12 @@ export class ApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMsg = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.detail) errorMsg = errorData.detail;
+        } catch(e) {}
+        throw new Error(errorMsg);
       }
 
       return (await response.json()) as T;
@@ -106,7 +121,12 @@ export class ApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMsg = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.detail) errorMsg = errorData.detail;
+        } catch(e) {}
+        throw new Error(errorMsg);
       }
 
       return (await response.json()) as T;
