@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from app.schemas.technical import (
-    TechnicalModule, TechnicalTopic, TechnicalSession, TechnicalResult,
-    TechnicalLanguage, TechnicalDifficulty
+    ClientTechnicalSession, ClientTechnicalQuestion, TechnicalAnswerRequest, TechnicalAnswerResponse, TechnicalSession, TechnicalResult,
+    TechnicalLanguage, TechnicalDifficulty, TechnicalQuestionType, TechnicalModule, TechnicalTopic, CSSubject, CSTopic
 )
 from app.services.technical_service import technical_service
 from app.core.firebase_auth import verify_firebase_token
@@ -16,8 +16,8 @@ class SessionStartRequest(BaseModel):
     difficulty: TechnicalDifficulty
     count: int = 5
 
-class SessionCompleteRequest(BaseModel):
-    score: int
+class DummyCompleteRequest(BaseModel):
+    pass
 
 @router.get("/modules", response_model=List[TechnicalModule])
 async def get_modules():
@@ -33,7 +33,7 @@ async def get_module(module_id: str):
         raise HTTPException(status_code=404, detail="Module not found")
     return module
 
-@router.post("/sessions/start", response_model=TechnicalSession)
+@router.post("/sessions/start", response_model=ClientTechnicalSession)
 async def start_session(
     request: SessionStartRequest,
     uid: str = Depends(verify_firebase_token)
@@ -51,7 +51,7 @@ async def start_session(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/sessions/{session_id}", response_model=TechnicalSession)
+@router.get("/sessions/{session_id}", response_model=ClientTechnicalSession)
 async def get_session(
     session_id: str,
     uid: str = Depends(verify_firebase_token)
@@ -61,14 +61,27 @@ async def get_session(
         raise HTTPException(status_code=404, detail="Session not found")
     return session
 
-@router.post("/sessions/{session_id}/complete", response_model=TechnicalResult)
-async def complete_session(
+@router.post("/sessions/{session_id}/answer", response_model=TechnicalAnswerResponse)
+async def submit_answer(
     session_id: str,
-    request: SessionCompleteRequest,
+    request: TechnicalAnswerRequest,
     uid: str = Depends(verify_firebase_token)
 ):
     try:
-        return technical_service.complete_session(uid, session_id, request.score)
+        return technical_service.submit_answer(uid, session_id, request.questionId, request.selectedOption)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/sessions/{session_id}/complete", response_model=TechnicalResult)
+async def complete_session(
+    session_id: str,
+    
+    uid: str = Depends(verify_firebase_token)
+):
+    try:
+        return technical_service.complete_session(uid, session_id)
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:

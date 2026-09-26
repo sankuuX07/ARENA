@@ -66,6 +66,16 @@ class TechnicalQuestion(BaseModel):
     correctOption: Optional[int] = None
     explanation: str
 
+class ClientTechnicalQuestion(BaseModel):
+    questionId: str
+    language: TechnicalLanguage
+    topic: str
+    difficulty: TechnicalDifficulty
+    questionType: TechnicalQuestionType
+    question: str
+    codeSnippet: Optional[str] = None
+    options: Optional[List[str]] = None
+
 class TechnicalSession(BaseModel):
     sessionId: str
     uid: str
@@ -79,11 +89,30 @@ class TechnicalSession(BaseModel):
     startedAt: str
     completedAt: Optional[str] = None
     questions: List[TechnicalQuestion] = []
+    
+class ClientTechnicalSession(BaseModel):
+    sessionId: str
+    uid: str
+    language: TechnicalLanguage
+    topic: str
+    difficulty: TechnicalDifficulty
+    questionCount: int
+    currentQuestionIndex: int = 0
+    score: int = 0
+    status: str = "active"
+    startedAt: str
+    completedAt: Optional[str] = None
+    questions: List[ClientTechnicalQuestion] = []
 
 class TechnicalAnswerRequest(BaseModel):
     questionId: str
     selectedOption: Optional[int] = None
     answerText: Optional[str] = None
+
+class TechnicalAnswerResponse(BaseModel):
+    isCorrect: bool
+    correctOption: Optional[int] = None
+    explanation: str
 
 class TechnicalResult(BaseModel):
     sessionId: str

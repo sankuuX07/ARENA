@@ -1,5 +1,5 @@
 import { ApiService } from './api';
-import { TechnicalQuestionType, TechnicalDifficulty, TechnicalTopic, TechnicalSession, TechnicalResult } from './technicalService';
+import { TechnicalQuestionType, TechnicalDifficulty, TechnicalTopic, TechnicalSession, TechnicalResult, TechnicalAnswerResponse } from './technicalService';
 
 export const getJavaTopics = async (): Promise<TechnicalTopic[]> => {
   return await ApiService.get<TechnicalTopic[]>('/technical/java/topics');
@@ -25,9 +25,17 @@ export const startJavaSession = async (
 
 export const completeJavaSession = async (
   sessionId: string,
-  score: number
-): Promise<TechnicalResult> => {
-  return await ApiService.post<TechnicalResult>(`/technical/java/sessions/${sessionId}/complete`, {
-    score
+  ): Promise<TechnicalResult> => {
+  return await ApiService.post<TechnicalResult>(`/technical/java/sessions/${sessionId}/complete`, {});
+};
+
+export const submitJavaAnswer = async (
+  sessionId: string,
+  questionId: string,
+  selectedOption: number
+): Promise<TechnicalAnswerResponse> => {
+  return await ApiService.post<TechnicalAnswerResponse>(`/technical/java/sessions/${sessionId}/answer`, {
+    questionId,
+    selectedOption
   });
 };

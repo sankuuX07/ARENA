@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from app.schemas.technical import (
     TechnicalLanguage, TechnicalTopic, TechnicalModule, 
-    TechnicalQuestion, TechnicalSession, TechnicalAnswerRequest, TechnicalResult,
+    TechnicalQuestion, TechnicalSession, TechnicalAnswerRequest, TechnicalAnswerResponse, TechnicalResult,
     TechnicalDifficulty, TechnicalQuestionType
 )
 from app.services.gemini_service import gemini_service
@@ -167,20 +167,35 @@ class TechnicalService:
                 return s
         return None
 
-    def complete_session(self, uid: str, session_id: str, final_score: int) -> TechnicalResult:
+    def submit_answer(self, uid: str, session_id: str, question_id: str, selected_option: int) -> TechnicalAnswerResponse:
+        session = self.get_session(uid, session_id)
+        if not session or session.status != "active":
+            raise ValueError("Active session not found")
+            
+        for q in session.questions:
+            if q.questionId == question_id:
+                is_correct = (q.correctOption == selected_option)
+                if is_correct:
+                    session.score += 1
+                return TechnicalAnswerResponse(
+                    isCorrect=is_correct,
+                    correctOption=q.correctOption,
+                    explanation=q.explanation
+                )
+        raise ValueError("Question not found in session")
+
+    def complete_session(self, uid: str, session_id: str) -> TechnicalResult:
         session = self.get_session(uid, session_id)
         if not session:
             raise ValueError("Session not found")
             
         session.status = "completed"
         session.completedAt = datetime.utcnow().isoformat() + "Z"
-        session.score = final_score
-        
-        acc = int((final_score / session.questionCount) * 100) if session.questionCount > 0 else 0
+        acc = int((session.score / session.questionCount) * 100) if session.questionCount > 0 else 0
         
         return TechnicalResult(
             sessionId=session.sessionId,
-            score=final_score,
+            score=session.score,
             totalQuestions=session.questionCount,
             accuracy=acc,
             completedAt=session.completedAt

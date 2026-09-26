@@ -1,5 +1,5 @@
 import { ApiService } from './api';
-import { TechnicalQuestionType, TechnicalDifficulty, TechnicalSession, TechnicalResult } from './technicalService';
+import { TechnicalQuestionType, TechnicalDifficulty, TechnicalSession, TechnicalResult, TechnicalAnswerResponse } from './technicalService';
 
 export interface CSTopic {
   topicId: string;
@@ -49,9 +49,17 @@ export const startCSCoreSession = async (
 
 export const completeCSCoreSession = async (
   sessionId: string,
-  score: number
-): Promise<TechnicalResult> => {
-  return await ApiService.post<TechnicalResult>(`/technical/cs-core/sessions/${sessionId}/complete`, {
-    score
+  ): Promise<TechnicalResult> => {
+  return await ApiService.post<TechnicalResult>(`/technical/cs-core/sessions/${sessionId}/complete`, {});
+};
+
+export const submitCSCoreAnswer = async (
+  sessionId: string,
+  questionId: string,
+  selectedOption: number
+): Promise<TechnicalAnswerResponse> => {
+  return await ApiService.post<TechnicalAnswerResponse>(`/technical/cs-core/sessions/${sessionId}/answer`, {
+    questionId,
+    selectedOption
   });
 };

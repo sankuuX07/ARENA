@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { startTechnicalSession, completeTechnicalSession, TechnicalSession, TechnicalLanguage, TechnicalDifficulty } from '../../services/technicalService';
+import { startTechnicalSession, completeTechnicalSession, submitTechnicalAnswer, TechnicalSession, TechnicalLanguage, TechnicalDifficulty } from '../../services/technicalService';
 import { recordStudentActivity } from '../../services/progressService';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
@@ -18,6 +18,7 @@ export const TechnicalSessionPage: React.FC = () => {
   
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [answerData, setAnswerData] = useState<any>(null);
   
   // Note: For Milestone 21, the session is purely structural with 1 question.
   // In full implementation, we'll iterate through `session.questions`.
@@ -48,13 +49,11 @@ export const TechnicalSessionPage: React.FC = () => {
   const handleComplete = async () => {
     if (!session || selectedOption === null || !currentUser) return;
     
-    const q = session.questions[session.currentQuestionIndex];
-    const isCorrect = selectedOption === q.correctOption;
-    const score = isCorrect ? 100 : 0;
-    
     try {
       setLoading(true);
-      await completeTechnicalSession(session.sessionId, score);
+      const result = await completeTechnicalSession(session.sessionId);
+      const isCorrect = (result.score / result.totalQuestions) > 0.5;
+      const score = Math.round((result.score / result.totalQuestions) * 100);
       
       // Update Progress Engine
       await recordStudentActivity(currentUser.uid, {
@@ -121,10 +120,10 @@ export const TechnicalSessionPage: React.FC = () => {
               </div>
               <span style={{ fontSize: '1rem' }}>{opt}</span>
               
-              {showExplanation && idx === currentQ.correctOption && (
+              {showExplanation && idx === answerData?.correctOption && (
                 <CheckCircle size={20} color="var(--success)" style={{ marginLeft: 'auto' }} />
               )}
-              {showExplanation && selectedOption === idx && idx !== currentQ.correctOption && (
+              {showExplanation && selectedOption === idx && idx !== answerData?.correctOption && (
                 <XCircle size={20} color="var(--error)" style={{ marginLeft: 'auto' }} />
               )}
             </div>
@@ -133,17 +132,29 @@ export const TechnicalSessionPage: React.FC = () => {
       </div>
 
       {showExplanation && (
-        <div style={{ padding: '1.5rem', background: selectedOption === currentQ.correctOption ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${selectedOption === currentQ.correctOption ? 'var(--success)' : 'var(--error)'}`, borderRadius: 'var(--radius-lg)', marginBottom: '2rem' }}>
-          <h3 style={{ margin: '0 0 0.5rem', color: selectedOption === currentQ.correctOption ? 'var(--success)' : 'var(--error)' }}>
-            {selectedOption === currentQ.correctOption ? 'Correct!' : 'Incorrect'}
+        <div style={{ padding: '1.5rem', background: selectedOption === answerData?.correctOption ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${selectedOption === answerData?.correctOption ? 'var(--success)' : 'var(--error)'}`, borderRadius: 'var(--radius-lg)', marginBottom: '2rem' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: selectedOption === answerData?.correctOption ? 'var(--success)' : 'var(--error)' }}>
+            {selectedOption === answerData?.correctOption ? 'Correct!' : 'Incorrect'}
           </h3>
-          <p style={{ margin: 0, lineHeight: 1.5 }}>{currentQ.explanation}</p>
+          <p style={{ margin: 0, lineHeight: 1.5 }}>{answerData?.explanation}</p>
         </div>
       )}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
         {!showExplanation ? (
-          <Button variant="primary" disabled={selectedOption === null} onClick={() => setShowExplanation(true)}>
+          <Button variant="primary" disabled={selectedOption === null} onClick={async () => {
+            try {
+              setLoading(true);
+              const q = session.questions[session.currentQuestionIndex];
+              const data = await submitTechnicalAnswer(session.sessionId, q.questionId, selectedOption as number);
+              setAnswerData(data);
+              setShowExplanation(true);
+            } catch(e: any) {
+              setError(e.message);
+            } finally {
+              setLoading(false);
+            }
+          }}>
             Submit Answer
           </Button>
         ) : (

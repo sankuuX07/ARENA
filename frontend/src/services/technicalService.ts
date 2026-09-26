@@ -35,6 +35,12 @@ export interface TechnicalQuestion {
   explanation: string;
 }
 
+export interface TechnicalAnswerResponse {
+  isCorrect: boolean;
+  correctOption?: number;
+  explanation: string;
+}
+
 export interface TechnicalSession {
   sessionId: string;
   uid: string;
@@ -82,9 +88,17 @@ export const startTechnicalSession = async (
 
 export const completeTechnicalSession = async (
   sessionId: string,
-  score: number
-): Promise<TechnicalResult> => {
-  return await ApiService.post<TechnicalResult>(`/technical/sessions/${sessionId}/complete`, {
-    score
+  ): Promise<TechnicalResult> => {
+  return await ApiService.post<TechnicalResult>(`/technical/sessions/${sessionId}/complete`, {});
+};
+
+export const submitTechnicalAnswer = async (
+  sessionId: string,
+  questionId: string,
+  selectedOption: number
+): Promise<TechnicalAnswerResponse> => {
+  return await ApiService.post<TechnicalAnswerResponse>(`/technical/sessions/${sessionId}/answer`, {
+    questionId,
+    selectedOption
   });
 };

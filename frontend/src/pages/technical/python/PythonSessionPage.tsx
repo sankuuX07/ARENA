@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { startPythonSession, completePythonSession } from '../../../services/pythonService';
+import { startPythonSession, completePythonSession, submitPythonAnswer } from '../../../services/pythonService';
 import { TechnicalSession, TechnicalDifficulty, TechnicalQuestionType } from '../../../services/technicalService';
 import { recordStudentActivity } from '../../../services/progressService';
 import { useAuth } from '../../../context/AuthContext';
@@ -20,8 +20,8 @@ export const PythonSessionPage: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
-  const [score, setScore] = useState(0);
-
+  const [answerData, setAnswerData] = useState<any>(null);
+  
   useEffect(() => {
     if (sessionId === 'new') {
       initSession();
@@ -48,20 +48,19 @@ export const PythonSessionPage: React.FC = () => {
   const handleNext = async () => {
     if (!session || selectedOption === null || !currentUser) return;
     
-    const q = session.questions[currentIndex];
-    const isCorrect = selectedOption === q.correctOption;
-    if (isCorrect) setScore(s => s + 1);
+    
 
     if (currentIndex + 1 < session.questionCount) {
       setCurrentIndex(i => i + 1);
       setSelectedOption(null);
       setShowExplanation(false);
+      setAnswerData(null);
     } else {
       // Complete Session
-      const finalScore = score + (isCorrect ? 1 : 0);
+      
       try {
         setLoading(true);
-        await completePythonSession(session.sessionId, finalScore);
+        const result = await completePythonSession(session.sessionId);
         
         await recordStudentActivity(currentUser.uid, {
           module: 'technical',
@@ -69,11 +68,11 @@ export const PythonSessionPage: React.FC = () => {
           topic: session.topic,
           difficulty: session.difficulty,
           status: 'completed',
-          isCorrect: (finalScore / session.questionCount) > 0.5,
-          score: Math.round((finalScore / session.questionCount) * 100)
+          isCorrect: (result.score / session.questionCount) > 0.5,
+          score: Math.round((result.score / session.questionCount) * 100)
         });
         
-        navigate('/technical/python/result', { state: { result: { score: finalScore, total: session.questionCount, topic: session.topic } }});
+        navigate('/technical/python/result', { state: { result: { score: result.score, total: session.questionCount, topic: session.topic } }});
       } catch (err: any) {
         setError(err.message || 'Failed to complete session');
         setLoading(false);
@@ -134,10 +133,10 @@ export const PythonSessionPage: React.FC = () => {
                 </div>
                 <span style={{ fontSize: '1rem' }}>{opt}</span>
                 
-                {showExplanation && idx === currentQ.correctOption && (
+                {showExplanation && idx === answerData?.correctOption && (
                   <CheckCircle size={20} color="var(--success)" style={{ marginLeft: 'auto' }} />
                 )}
-                {showExplanation && selectedOption === idx && idx !== currentQ.correctOption && (
+                {showExplanation && selectedOption === idx && idx !== answerData?.correctOption && (
                   <XCircle size={20} color="var(--error)" style={{ marginLeft: 'auto' }} />
                 )}
               </div>
@@ -147,19 +146,31 @@ export const PythonSessionPage: React.FC = () => {
       </div>
 
       {showExplanation && (
-        <div style={{ padding: '1.5rem', background: (isConceptual || selectedOption === currentQ.correctOption) ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${(isConceptual || selectedOption === currentQ.correctOption) ? 'var(--success)' : 'var(--error)'}`, borderRadius: 'var(--radius-lg)', marginBottom: '2rem' }}>
+        <div style={{ padding: '1.5rem', background: (isConceptual || selectedOption === answerData?.correctOption) ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${(isConceptual || selectedOption === answerData?.correctOption) ? 'var(--success)' : 'var(--error)'}`, borderRadius: 'var(--radius-lg)', marginBottom: '2rem' }}>
           {!isConceptual && (
-            <h3 style={{ margin: '0 0 0.5rem', color: selectedOption === currentQ.correctOption ? 'var(--success)' : 'var(--error)' }}>
-              {selectedOption === currentQ.correctOption ? 'Correct!' : 'Incorrect'}
+            <h3 style={{ margin: '0 0 0.5rem', color: selectedOption === answerData?.correctOption ? 'var(--success)' : 'var(--error)' }}>
+              {selectedOption === answerData?.correctOption ? 'Correct!' : 'Incorrect'}
             </h3>
           )}
-          <p style={{ margin: 0, lineHeight: 1.5 }}>{currentQ.explanation}</p>
+          <p style={{ margin: 0, lineHeight: 1.5 }}>{answerData?.explanation}</p>
         </div>
       )}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
         {!showExplanation ? (
-          <Button variant="primary" disabled={!isConceptual && selectedOption === null} onClick={() => setShowExplanation(true)}>
+          <Button variant="primary" disabled={!isConceptual && selectedOption === null} onClick={async () => {
+            try {
+              setLoading(true);
+              const q = session.questions[currentIndex];
+              const data = await submitPythonAnswer(session.sessionId, q.questionId, selectedOption as number);
+              setAnswerData(data);
+              setShowExplanation(true);
+            } catch(e: any) {
+              setError(e.message);
+            } finally {
+              setLoading(false);
+            }
+          }}>
             {isConceptual ? 'Show Answer' : 'Submit Answer'}
           </Button>
         ) : (

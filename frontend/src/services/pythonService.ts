@@ -1,5 +1,5 @@
 import { ApiService } from './api';
-import { TechnicalQuestionType, TechnicalDifficulty, TechnicalTopic, TechnicalSession, TechnicalResult } from './technicalService';
+import { TechnicalQuestionType, TechnicalDifficulty, TechnicalTopic, TechnicalSession, TechnicalResult, TechnicalAnswerResponse } from './technicalService';
 
 export const getPythonTopics = async (): Promise<TechnicalTopic[]> => {
   return await ApiService.get<TechnicalTopic[]>('/technical/python/topics');
@@ -25,9 +25,17 @@ export const startPythonSession = async (
 
 export const completePythonSession = async (
   sessionId: string,
-  score: number
-): Promise<TechnicalResult> => {
-  return await ApiService.post<TechnicalResult>(`/technical/python/sessions/${sessionId}/complete`, {
-    score
+  ): Promise<TechnicalResult> => {
+  return await ApiService.post<TechnicalResult>(`/technical/python/sessions/${sessionId}/complete`, {});
+};
+
+export const submitPythonAnswer = async (
+  sessionId: string,
+  questionId: string,
+  selectedOption: number
+): Promise<TechnicalAnswerResponse> => {
+  return await ApiService.post<TechnicalAnswerResponse>(`/technical/python/sessions/${sessionId}/answer`, {
+    questionId,
+    selectedOption
   });
 };
