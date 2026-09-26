@@ -8,6 +8,11 @@ class LogicalQuestion(BaseModel):
     correctOption: int
     explanation: str
 
+class ClientLogicalQuestion(BaseModel):
+    question_id: str
+    question: str
+    options: List[str]
+
 class LogicalStartRequest(BaseModel):
     uid: str
     category: str = "logical"
@@ -20,7 +25,7 @@ class LogicalStartResponse(BaseModel):
     category: str = "logical"
     topic: str
     difficulty: str
-    questions: List[LogicalQuestion]
+    questions: List[ClientLogicalQuestion]
 
 class LogicalSessionCompleteRequest(BaseModel):
     uid: str
@@ -28,7 +33,7 @@ class LogicalSessionCompleteRequest(BaseModel):
     category: str = "logical"
     topic: str
     difficulty: str
-    questions: List[LogicalQuestion]
+    questions: List[ClientLogicalQuestion]
     answers: dict[str, int] # question_id -> selected_option
 
 class LogicalSessionSummary(BaseModel):
@@ -44,3 +49,4 @@ class LogicalSessionSummary(BaseModel):
     accuracy: int
     time_taken: int
     completed_at: str
+    questions_with_answers: Optional[List[LogicalQuestion]] = None

@@ -16,6 +16,8 @@ router = APIRouter()
 async def start_group_discussion(request: GroupDiscussionStartRequest):
     try:
         return await group_discussion_service.start_session(request)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -27,6 +29,8 @@ async def respond_group_discussion(request: EvaluateTurnRequest):
     try:
         # Extract topic from the wrapper request
         return await group_discussion_service.evaluate_turn(request, request.topic)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -47,5 +51,7 @@ async def complete_group_discussion(request: CompleteSessionRequest):
             difficulty=request.difficulty,
             transcript_messages=request.messages
         )
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

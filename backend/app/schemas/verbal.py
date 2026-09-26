@@ -8,6 +8,11 @@ class VerbalQuestion(BaseModel):
     correctOption: int
     explanation: str
 
+class ClientVerbalQuestion(BaseModel):
+    question_id: str
+    question: str
+    options: List[str]
+
 class VerbalStartRequest(BaseModel):
     uid: str
     category: str = "verbal"
@@ -20,7 +25,7 @@ class VerbalStartResponse(BaseModel):
     category: str = "verbal"
     topic: str
     difficulty: str
-    questions: List[VerbalQuestion]
+    questions: List[ClientVerbalQuestion]
 
 class VerbalSessionCompleteRequest(BaseModel):
     uid: str
@@ -28,7 +33,7 @@ class VerbalSessionCompleteRequest(BaseModel):
     category: str = "verbal"
     topic: str
     difficulty: str
-    questions: List[VerbalQuestion]
+    questions: List[ClientVerbalQuestion]
     answers: dict[str, int] # question_id -> selected_option
 
 class VerbalSessionSummary(BaseModel):
@@ -44,3 +49,4 @@ class VerbalSessionSummary(BaseModel):
     accuracy: int
     time_taken: int
     completed_at: str
+    questions_with_answers: Optional[List[VerbalQuestion]] = None

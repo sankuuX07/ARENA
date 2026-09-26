@@ -41,6 +41,7 @@ export interface AptitudeSessionSummary {
   accuracy: number;
   time_taken: number;
   completed_at: string;
+  questions_with_answers?: AptitudeQuestion[];
 }
 
 export interface AptitudeHistoryItem {

@@ -2,13 +2,14 @@ import json
 import logging
 import uuid
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 from app.schemas.logical import (
     LogicalStartRequest,
     LogicalStartResponse,
     LogicalSessionCompleteRequest,
     LogicalSessionSummary,
-    LogicalQuestion
+    LogicalQuestion,
+    ClientLogicalQuestion
 )
 from app.services.gemini_service import gemini_service
 from app.services.prompts.logical_reasoning import LOGICAL_GENERATION_PROMPT
@@ -16,6 +17,9 @@ from app.services.prompts.logical_reasoning import LOGICAL_GENERATION_PROMPT
 logger = logging.getLogger(__name__)
 
 class LogicalReasoningService:
+    def __init__(self):
+        self._sessions: Dict[str, List[LogicalQuestion]] = {}
+
     async def start_session(self, request: LogicalStartRequest) -> LogicalStartResponse:
         session_id = f"logical_{uuid.uuid4().hex[:10]}"
         
@@ -32,21 +36,35 @@ class LogicalReasoningService:
         
         questions = self._parse_questions(raw_response, request.num_questions, request.topic)
         
+        self._sessions[session_id] = questions
+
+        client_questions = [
+            ClientLogicalQuestion(
+                question_id=q.question_id,
+                question=q.question,
+                options=q.options
+            ) for q in questions
+        ]
+        
         return LogicalStartResponse(
             session_id=session_id,
             category=request.category,
             topic=request.topic,
             difficulty=request.difficulty,
-            questions=questions
+            questions=client_questions
         )
 
     async def complete_session(self, request: LogicalSessionCompleteRequest) -> LogicalSessionSummary:
-        total_questions = len(request.questions)
+        real_questions = self._sessions.get(request.session_id, [])
+        if not real_questions:
+            raise ValueError("Session expired or not found")
+            
+        total_questions = len(real_questions)
         correct = 0
         incorrect = 0
         unanswered = 0
         
-        for q in request.questions:
+        for q in real_questions:
             student_answer = request.answers.get(q.question_id)
             if student_answer is None or student_answer == -1:
                 unanswered += 1
@@ -110,15 +128,6 @@ class LogicalReasoningService:
             return questions[:expected_count]
         except Exception as e:
             logger.warning(f"Failed to parse AI logical questions JSON: {e}")
-            # Fallback
-            return [
-                LogicalQuestion(
-                    question_id=f"q_{uuid.uuid4().hex[:8]}",
-                    question=f"Fallback question for {topic} - please try again later.",
-                    options=["Option A", "Option B", "Option C", "Option D"],
-                    correctOption=0,
-                    explanation="Fallback explanation due to generation error."
-                ) for _ in range(expected_count)
-            ]
+            raise ValueError("Failed to parse AI logical reasoning questions.")
 
 logical_reasoning_service = LogicalReasoningService()

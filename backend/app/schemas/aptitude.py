@@ -25,7 +25,7 @@ class AptitudeStartResponse(BaseModel):
     category: str
     topic: Optional[str] = None
     difficulty: str
-    questions: List[AptitudeQuestion]
+    questions: List[ClientAptitudeQuestion]
 
 class AptitudeAnswerRequest(BaseModel):
     uid: str
@@ -44,7 +44,7 @@ class AptitudeSessionCompleteRequest(BaseModel):
     category: str
     topic: Optional[str] = None
     difficulty: str
-    questions: List[AptitudeQuestion]
+    questions: List[ClientAptitudeQuestion]
     answers: dict[str, int] # question_id -> selected_option
 
 class AptitudeSessionSummary(BaseModel):
@@ -60,3 +60,4 @@ class AptitudeSessionSummary(BaseModel):
     accuracy: int
     time_taken: int
     completed_at: str
+    questions_with_answers: Optional[List[AptitudeQuestion]] = None

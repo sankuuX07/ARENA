@@ -2,7 +2,7 @@ import json
 import logging
 import uuid
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 from app.schemas.aptitude import (
     AptitudeStartRequest,
     AptitudeStartResponse,
@@ -10,7 +10,8 @@ from app.schemas.aptitude import (
     AptitudeAnswerResponse,
     AptitudeSessionCompleteRequest,
     AptitudeSessionSummary,
-    AptitudeQuestion
+    AptitudeQuestion,
+    ClientAptitudeQuestion
 )
 from app.services.gemini_service import gemini_service
 from app.services.prompts.aptitude import APTITUDE_GENERATION_PROMPT
@@ -19,6 +20,9 @@ from app.services.prompts.quantitative import QUANTITATIVE_GENERATION_PROMPT
 logger = logging.getLogger(__name__)
 
 class AptitudeService:
+    def __init__(self):
+        self._sessions: Dict[str, List[AptitudeQuestion]] = {}
+
     async def start_session(self, request: AptitudeStartRequest) -> AptitudeStartResponse:
         session_id = f"apt_{uuid.uuid4().hex[:10]}"
         
@@ -42,21 +46,35 @@ class AptitudeService:
         
         questions = self._parse_questions(raw_response, request.num_questions)
         
+        self._sessions[session_id] = questions
+
+        client_questions = [
+            ClientAptitudeQuestion(
+                question_id=q.question_id,
+                question=q.question,
+                options=q.options
+            ) for q in questions
+        ]
+        
         return AptitudeStartResponse(
             session_id=session_id,
             category=request.category,
             topic=request.topic,
             difficulty=request.difficulty,
-            questions=questions
+            questions=client_questions
         )
 
     async def complete_session(self, request: AptitudeSessionCompleteRequest) -> AptitudeSessionSummary:
-        total_questions = len(request.questions)
+        real_questions = self._sessions.get(request.session_id, [])
+        if not real_questions:
+            raise ValueError("Session expired or not found")
+            
+        total_questions = len(real_questions)
         correct = 0
         incorrect = 0
         unanswered = 0
         
-        for q in request.questions:
+        for q in real_questions:
             student_answer = request.answers.get(q.question_id)
             if student_answer is None or student_answer == -1:
                 unanswered += 1
@@ -80,8 +98,12 @@ class AptitudeService:
             score=score,
             accuracy=accuracy,
             time_taken=0, # Computed by frontend usually or via timestamps
-            completed_at=datetime.utcnow().isoformat() + "Z"
+            completed_at=datetime.utcnow().isoformat() + "Z",
+            questions_with_answers=real_questions
         )
+        # Clear memory
+        self._sessions.pop(request.session_id, None)
+        return summary
 
     def _parse_questions(self, raw_response: str, expected_count: int) -> List[AptitudeQuestion]:
         try:
@@ -110,15 +132,6 @@ class AptitudeService:
             return questions[:expected_count]
         except Exception as e:
             logger.warning(f"Failed to parse AI aptitude questions JSON: {e}")
-            # Fallback
-            return [
-                AptitudeQuestion(
-                    question_id=f"q_{uuid.uuid4().hex[:8]}",
-                    question="What is 2 + 2?",
-                    options=["3", "4", "5", "6"],
-                    correctOption=1,
-                    explanation="2 + 2 equals 4."
-                ) for _ in range(expected_count)
-            ]
+            raise ValueError("Failed to parse AI aptitude questions.")
 
 aptitude_service = AptitudeService()

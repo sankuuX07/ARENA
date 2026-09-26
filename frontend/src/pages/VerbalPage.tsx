@@ -158,8 +158,10 @@ export const VerbalPage: React.FC = () => {
         timeTaken,
         selectedTopic
       );
-      
       setFinalResult(summary);
+      if (summary.questions_with_answers) {
+        setQuestions(summary.questions_with_answers);
+      }
       setIsSessionComplete(true);
       loadHistoryData(currentUser.uid);
     } catch (err: any) {
