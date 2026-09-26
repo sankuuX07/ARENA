@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 class GeminiService:
     def __init__(self):
-        self.api_key = settings.GEMINI_API_KEY
-        self.model_name = settings.GEMINI_MODEL or "gemini-1.5-flash"
+        self.api_key = settings.GROQ_API_KEY
+        self.model_name = settings.GROQ_MODEL or "llama3-70b-8192"
 
     async def generate_communication_response(
         self,
@@ -18,41 +18,42 @@ class GeminiService:
         history: Optional[List[Dict[str, str]]] = None,
     ) -> str:
         """
-        Generate AI communication response using Google Gemini API or intelligent interactive fallback.
+        Generate AI communication response using Groq API or intelligent interactive fallback.
+        (Kept method name generate_communication_response for compatibility)
         """
         system_prompt = build_system_prompt(mode)
 
         if not self.api_key or self.api_key == "your_gemini_api_key_here":
-            logger.warning("[GeminiService] GEMINI_API_KEY is not configured.")
+            logger.warning("[GeminiService] GROQ_API_KEY is not configured.")
             raise ValueError("AI service not configured. Please configure the backend AI provider credentials.")
 
         try:
-            import google.generativeai as genai
+            from groq import Groq
+            client = Groq(api_key=self.api_key)
 
-            genai.configure(api_key=self.api_key)
-            model = genai.GenerativeModel(
-                model_name=self.model_name,
-                system_instruction=system_prompt,
-            )
-
-            # Build Gemini chat history
-            formatted_history = []
+            messages = [{"role": "system", "content": system_prompt}]
+            
             if history:
                 for item in history:
-                    role = "user" if item.get("role") in ["student", "user"] else "model"
+                    role = "user" if item.get("role") in ["student", "user"] else "assistant"
                     content = item.get("content", "").strip()
                     if content:
-                        formatted_history.append({"role": role, "parts": [content]})
+                        messages.append({"role": role, "content": content})
+            
+            messages.append({"role": "user", "content": message})
 
-            chat = model.start_chat(history=formatted_history)
-            response = chat.send_message(message)
+            chat_completion = client.chat.completions.create(
+                messages=messages,
+                model=self.model_name,
+            )
 
-            if response and response.text:
-                return response.text.strip()
+            if chat_completion.choices and chat_completion.choices[0].message:
+                return chat_completion.choices[0].message.content.strip()
+            
             raise ValueError("AI service temporarily unavailable.")
 
         except Exception as e:
-            logger.error(f"[GeminiService] Error calling Gemini API: {e}")
+            logger.error(f"[GeminiService] Error calling Groq API: {e}")
             raise ValueError("AI service temporarily unavailable.")
 
     async def generate_json_response(
@@ -61,32 +62,37 @@ class GeminiService:
         message: str
     ) -> str:
         """
-        Generate structured JSON response using Google Gemini API.
+        Generate structured JSON response using Groq API.
         """
         if not self.api_key or self.api_key == "your_gemini_api_key_here":
-            logger.warning("[GeminiService] GEMINI_API_KEY is not configured. Failing JSON generation.")
+            logger.warning("[GeminiService] GROQ_API_KEY is not configured. Failing JSON generation.")
             raise ValueError("AI service not configured. Please configure the backend AI provider credentials.")
 
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=self.api_key)
+            from groq import Groq
+            client = Groq(api_key=self.api_key)
             
-            # Using generation_config to enforce JSON
-            model = genai.GenerativeModel(
-                model_name=self.model_name,
-                system_instruction=system_instruction,
-                generation_config={"response_mime_type": "application/json"}
+            # Ensure the word json is in the prompt for Groq JSON mode
+            safe_system_instruction = system_instruction
+            if "json" not in safe_system_instruction.lower():
+                safe_system_instruction += "\nOutput in JSON format."
+
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": safe_system_instruction},
+                    {"role": "user", "content": message}
+                ],
+                model=self.model_name,
+                response_format={"type": "json_object"}
             )
 
-            response = model.generate_content(message)
-
-            if response and response.text:
-                return response.text.strip()
+            if chat_completion.choices and chat_completion.choices[0].message:
+                return chat_completion.choices[0].message.content.strip()
             
-            raise ValueError("Empty JSON response from Gemini")
+            raise ValueError("Empty JSON response from Groq")
 
         except Exception as e:
-            logger.error(f"[GeminiService] Error calling Gemini API for JSON: {e}")
+            logger.error(f"[GeminiService] Error calling Groq API for JSON: {e}")
             raise e
 
 gemini_service = GeminiService()
