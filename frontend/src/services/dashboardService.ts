@@ -1,4 +1,4 @@
-import { UserProfile, ProgressSummary, ActivityRecord } from '../types';
+import { UserProfile } from '../types';
 import { getProgressSummary, getRecentActivities } from './progressService';
 import { getStudentRank } from './rankingService';
 

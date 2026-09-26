@@ -34,7 +34,7 @@ class InterviewSession(BaseModel):
 
 class InterviewResponseRequest(BaseModel):
     responseMode: str
-    content: str
+    content: str = Field(..., max_length=5000)
 
 class InterviewResponse(BaseModel):
     studentMessage: InterviewMessage
