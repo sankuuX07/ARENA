@@ -9,9 +9,9 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
     ENVIRONMENT: str = "development"
     
-    # Gemini AI Configuration
-    GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-1.5-flash"
+    # Groq AI Configuration
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama3-70b-8192"
 
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
