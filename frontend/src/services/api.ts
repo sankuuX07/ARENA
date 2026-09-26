@@ -11,11 +11,50 @@ export class ApiService {
 
   private static formatUrl(endpoint: string): string {
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    // If the endpoint doesn't already start with /v1, inject it
-    const finalEndpoint = cleanEndpoint.startsWith('/v1/') || cleanEndpoint === '/v1'
-      ? cleanEndpoint
-      : `/v1${cleanEndpoint}`;
-    return `${this.baseUrl}${finalEndpoint}`;
+    
+    let base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    
+    // If base doesn't end with /api/v1 and doesn't end with /v1, and endpoint doesn't start with /v1
+    // It's getting messy. Let's just append carefully.
+    
+    // If base URL already includes /api/v1, we just need to make sure the endpoint doesn't duplicate it.
+    let finalEndpoint = cleanEndpoint;
+    if (!base.endsWith('/v1') && !base.endsWith('/v1/') && !finalEndpoint.startsWith('/v1/')) {
+        finalEndpoint = `/v1${finalEndpoint}`;
+    } else if (base.endsWith('/v1') && finalEndpoint.startsWith('/v1/')) {
+        finalEndpoint = finalEndpoint.substring(3); // remove /v1
+    }
+
+    return `${base}${finalEndpoint}`;
+  }
+
+  private static async getHeaders(): Promise<HeadersInit> {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      // If we're using local auth, just pass a dummy token or uid so the backend passes dev checks
+      const isLocalAuth = import.meta.env.VITE_AUTH_MODE === 'local';
+      if (isLocalAuth) {
+        const uid = localStorage.getItem('arena_local_session');
+        if (uid) {
+          headers['Authorization'] = `Bearer local-dev-token-${uid}`;
+        }
+        return headers;
+      }
+
+      // Import auth dynamically to avoid circular dependencies if any
+      const { auth } = await import('./firebase');
+      if (auth?.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    } catch (e) {
+      console.warn('[ApiService] Failed to get auth token', e);
+    }
+
+    return headers;
   }
 
   public static async get<T = any>(endpoint: string, options?: GetOptions): Promise<T> {
@@ -23,11 +62,10 @@ export class ApiService {
 
     const fetcher = async () => {
       try {
+        const headers = await this.getHeaders();
         const response = await fetch(url, {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
         });
 
         if (!response.ok) {
@@ -50,19 +88,16 @@ export class ApiService {
       return fetcher();
     }
 
-    // Use memoizePromise to cache the GET request
-    // Default TTL is 30s, or specify custom ttlMs
     return memoizePromise(`api_get_${endpoint}`, fetcher, options?.ttlMs ?? 30000);
   }
 
   public static async post<T = any>(endpoint: string, body?: any): Promise<T> {
     const url = this.formatUrl(endpoint);
     try {
+      const headers = await this.getHeaders();
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(body),
       });
 
@@ -85,11 +120,10 @@ export class ApiService {
   public static async patch<T = any>(endpoint: string, body?: any): Promise<T> {
     const url = this.formatUrl(endpoint);
     try {
+      const headers = await this.getHeaders();
       const response = await fetch(url, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(body || {}),
       });
 
@@ -112,11 +146,10 @@ export class ApiService {
   public static async delete<T = any>(endpoint: string, body?: any): Promise<T> {
     const url = this.formatUrl(endpoint);
     try {
+      const headers = await this.getHeaders();
       const response = await fetch(url, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: body ? JSON.stringify(body) : undefined,
       });
 
