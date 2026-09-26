@@ -100,18 +100,45 @@ class ResumeImprovementService:
             draft=draft
         )
 
+    def _extract_resume_text(self, storage_path: str, ext: str) -> str:
+        if not os.path.exists(storage_path):
+            return ""
+        
+        text = ""
+        try:
+            if ext == "pdf":
+                import PyPDF2
+                with open(storage_path, "rb") as f:
+                    reader = PyPDF2.PdfReader(f)
+                    for page in reader.pages:
+                        text += page.extract_text() + "\n"
+            elif ext == "docx":
+                import docx
+                doc = docx.Document(storage_path)
+                for para in doc.paragraphs:
+                    text += para.text + "\n"
+        except Exception as e:
+            print(f"[ResumeImprovementService] Extraction error: {e}")
+            
+        return text.strip()
+
     async def generate_suggestions(self, user_id: str, session_id: str, section: str, context: Optional[str] = None) -> List[ResumeImprovementSuggestion]:
         session = self.get_session(user_id, session_id)
         if not session:
             raise ValueError("Session not found")
 
-        # Mock extraction of resume content since M34 extraction is not present.
-        # In a real scenario, this would read the PDF text.
-        resume_content_mock = "Developed a website using React. Worked on the backend using Python. Increased things."
-        screening_feedback_mock = "The project descriptions lack actionable verbs and measurable metrics. The technical skills are not well organized."
+        resume = resume_service.get_resume(user_id, session.resumeId)
+        if not resume:
+            raise ValueError("Resume not found")
+
+        resume_content = self._extract_resume_text(resume.storagePath, resume.fileExtension)
+        if not resume_content:
+            resume_content = "Unable to extract text from resume."
+
+        screening_feedback_mock = "Focus on actionable impact and professional phrasing."
 
         prompt = build_resume_improvement_prompt(
-            resume_content=resume_content_mock,
+            resume_content=resume_content,
             screening_feedback=screening_feedback_mock,
             section=section
         )
