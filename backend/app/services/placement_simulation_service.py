@@ -212,9 +212,32 @@ class PlacementSimulationService:
                 )
                 int_session = await interview_service.start_session(user_id, config)
                 module_session_id = int_session.sessionId
+            elif round_def.type == "aptitude":
+                # For aptitude, we use the assessment service with a placement-specific or default assessment
+                # In a real app we'd dynamically generate one or use a specific ID. Here we use 'test_mixed_1' as a mock.
+                from app.services.assessment_service import assessment_service
+                apt_session = assessment_service.start_session(user_id, "test_mixed_1")
+                module_session_id = apt_session.sessionId
+            elif round_def.type == "technical":
+                # For general technical, we start a session in technical_service
+                from app.services.technical_service import technical_service
+                tech_session = await technical_service.start_session(
+                    uid=user_id, language="python", topic="Basics", difficulty="medium", count=5
+                )
+                module_session_id = tech_session.sessionId
+            elif round_def.type == "coding":
+                # For coding, we start a python session
+                from app.services.python_service import python_service
+                py_session = await python_service.start_session(
+                    uid=user_id, topic="Algorithms", difficulty="medium", q_type="coding", count=2
+                )
+                module_session_id = py_session.sessionId
+            elif round_def.type == "communication":
+                # For communication, start a situational session
+                from app.services.situational_communication_service import situational_service
+                sit_session = await situational_service.start_session(user_id, "Workplace scenario")
+                module_session_id = sit_session.sessionId
             else:
-                # For others, we might rely on the frontend to call the respective endpoints
-                # and just generate a placeholder ID or use a UUID for tracking here
                 module_session_id = f"mod_{uuid.uuid4().hex[:8]}"
 
             round_session.moduleSessionId = module_session_id
@@ -245,15 +268,36 @@ class PlacementSimulationService:
             round_def = next((r for r in sim.rounds if r.roundId == round_id))
 
             # Fetch authoritative score for the round if available
-            fetched_score = 80 # Default mock score for other types
+            fetched_score = 0
             
             if round_def.type == "interview" and req.resultReference:
                 evaluation = interview_evaluation_service.get_evaluation(user_id, req.resultReference)
                 if evaluation and evaluation.overallScore is not None:
                     fetched_score = evaluation.overallScore
+            elif round_def.type == "aptitude" and req.resultReference:
+                from app.services.assessment_result_service import assessment_result_service
+                res = assessment_result_service.get_result(req.resultReference, user_id)
+                if res:
+                    fetched_score = res.percentage
+            elif round_def.type == "technical" and req.resultReference:
+                from app.services.technical_service import technical_service
+                # resultReference is the sessionId for technical
+                tech_sess = technical_service.get_session(user_id, req.resultReference)
+                if tech_sess and tech_sess.questionCount > 0:
+                    fetched_score = int((tech_sess.score / tech_sess.questionCount) * 100)
+            elif round_def.type == "coding" and req.resultReference:
+                from app.services.python_service import python_service
+                # resultReference is the sessionId
+                py_sess = python_service.get_session(user_id, req.resultReference)
+                if py_sess and py_sess.questionCount > 0:
+                    fetched_score = int((py_sess.score / py_sess.questionCount) * 100)
+            elif round_def.type == "communication" and req.resultReference:
+                from app.services.situational_communication_service import situational_service
+                sit_sess = situational_service.get_session(user_id, req.resultReference)
+                if sit_sess and hasattr(sit_sess, 'evaluation') and sit_sess.evaluation:
+                    fetched_score = sit_sess.evaluation.overallScore or 0
                 else:
-                    # Fallback if evaluation is missing or score is None (e.g. insufficient data)
-                    fetched_score = 0
+                    fetched_score = 80 # Fallback if evaluation hasn't populated yet
             
             passed = True
             if round_def.passingScore is not None and fetched_score < round_def.passingScore:
