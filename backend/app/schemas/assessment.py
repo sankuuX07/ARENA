@@ -185,12 +185,4 @@ class AssessmentStatusResponse(BaseModel):
     expiresAt: Optional[str] = None
     serverTime: str
 
-class AssessmentResult(BaseModel):
-    sessionId: str
-    score: float
-    maxScore: float
-    accuracy: int
-    correct: int
-    incorrect: int
-    unanswered: int
-    passed: bool
+
