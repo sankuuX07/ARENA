@@ -60,30 +60,59 @@ class PuzzleService:
         self._problems.append(problem)
 
     def submit_solution(self, request: PuzzleSubmissionRequest) -> PuzzleSubmissionResponse:
-        # Fake submission for Milestone 17. 
-        # Code execution and evaluation will be in Milestone 19.
-        submission_id = f"sub_{uuid.uuid4().hex[:10]}"
-        return PuzzleSubmissionResponse(
-            submissionId=submission_id,
-            uid=request.uid,
+        from app.services.coding_evaluation_service import coding_evaluation_service
+        from app.schemas.evaluation import CodingSubmissionRequest
+        
+        eval_req = CodingSubmissionRequest(
             problemId=request.problemId,
             language=request.language,
-            code=request.code,
-            status="pending", # Strictly keeping it pending since we aren't executing it.
-            createdAt=datetime.utcnow().isoformat() + "Z"
+            code=request.code
+        )
+        eval_resp = coding_evaluation_service.evaluate_submission(request.uid, eval_req)
+        
+        return PuzzleSubmissionResponse(
+            submissionId=eval_resp.submissionId,
+            uid=request.uid,
+            problemId=eval_resp.problemId,
+            language=eval_resp.language,
+            code=eval_resp.code if hasattr(eval_resp, 'code') else request.code,
+            status=eval_resp.status,
+            createdAt=eval_resp.submittedAt
         )
 
     def get_progress(self, uid: str) -> PuzzleProgress:
-        # Return a foundational empty progress object.
-        # This will be populated from Firestore in future milestones.
+        from app.services.coding_evaluation_service import coding_evaluation_service
+        history = coding_evaluation_service.get_submission_history(uid)
+        attempted_problems = set(sub.problemId for sub in history)
+        solved_problems = set(sub.problemId for sub in history if sub.status == 'accepted')
+        
+        easy_solved = 0
+        medium_solved = 0
+        hard_solved = 0
+        
+        for pid in solved_problems:
+            prob = self.get_problem(pid)
+            if prob:
+                diff = prob.difficulty.lower()
+                if diff == 'easy':
+                    easy_solved += 1
+                elif diff == 'medium':
+                    medium_solved += 1
+                elif diff == 'hard':
+                    hard_solved += 1
+                    
+        accuracy = 0
+        if len(history) > 0:
+            accuracy = round((len([s for s in history if s.status == 'accepted']) / len(history)) * 100)
+
         return PuzzleProgress(
             uid=uid,
-            problemsAttempted=0,
-            problemsSolved=0,
-            accuracy=0,
-            easySolved=0,
-            mediumSolved=0,
-            hardSolved=0
+            problemsAttempted=len(attempted_problems),
+            problemsSolved=len(solved_problems),
+            accuracy=accuracy,
+            easySolved=easy_solved,
+            mediumSolved=medium_solved,
+            hardSolved=hard_solved
         )
 
 puzzle_service = PuzzleService()

@@ -16,32 +16,36 @@ from app.core.firebase_auth import verify_firebase_token
 router = APIRouter()
 
 @router.get("/problems", response_model=List[PuzzleProblem])
-async def get_problems():
+async def get_problems(token_uid: str = Depends(verify_firebase_token)):
     return puzzle_service.get_all_problems()
 
 @router.get("/problems/{problem_id}", response_model=PuzzleProblem)
-async def get_problem(problem_id: str):
+async def get_problem(problem_id: str, token_uid: str = Depends(verify_firebase_token)):
     problem = puzzle_service.get_problem(problem_id)
     if not problem:
         raise HTTPException(status_code=404, detail="Problem not found")
     return problem
 
 @router.post("/submissions", response_model=PuzzleSubmissionResponse)
-async def submit_solution(request: PuzzleSubmissionRequest):
+async def submit_solution(request: PuzzleSubmissionRequest, token_uid: str = Depends(verify_firebase_token)):
+    if request.uid != token_uid:
+        raise HTTPException(status_code=403, detail="Not authorized")
     try:
         return puzzle_service.submit_solution(request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/progress/{uid}", response_model=PuzzleProgress)
-async def get_puzzle_progress(uid: str):
+async def get_puzzle_progress(uid: str, token_uid: str = Depends(verify_firebase_token)):
+    if uid != token_uid:
+        raise HTTPException(status_code=403, detail="Not authorized")
     try:
         return puzzle_service.get_progress(uid)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/generate", response_model=PuzzleProblem)
-async def generate_problem(request: ProblemGenerationRequest):
+async def generate_problem(request: ProblemGenerationRequest, token_uid: str = Depends(verify_firebase_token)):
     try:
         return await problem_generator_service.generate_problem(request)
     except ValueError as ve:
