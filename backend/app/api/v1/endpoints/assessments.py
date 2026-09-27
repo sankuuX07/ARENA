@@ -11,6 +11,7 @@ from app.core.firebase_auth import verify_firebase_token
 
 router = APIRouter()
 
+@router.get("", response_model=List[Assessment])
 @router.get("/", response_model=List[Assessment])
 async def get_assessments(uid: str = Depends(verify_firebase_token)):
     return assessment_service.get_assessments()

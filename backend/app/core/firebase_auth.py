@@ -30,6 +30,14 @@ async def verify_firebase_token(
             detail="Empty authorization token.",
         )
 
+    # Development local-auth bypass: frontend sends 'local-dev-token-{uid}'
+    # when VITE_AUTH_MODE=local. Extract the UID directly without Firebase.
+    if settings.ENVIRONMENT != "production" and token.startswith("local-dev-token-"):
+        uid = token[len("local-dev-token-"):]
+        if uid:
+            return uid
+        raise HTTPException(status_code=401, detail="Invalid local dev token format.")
+
     try:
         from firebase_admin import auth
         decoded_token = auth.verify_id_token(token)
@@ -37,3 +45,4 @@ async def verify_firebase_token(
     except Exception as e:
         logger.warning(f"Auth failed: {str(e)}")
         raise HTTPException(status_code=401, detail="Invalid token")
+
