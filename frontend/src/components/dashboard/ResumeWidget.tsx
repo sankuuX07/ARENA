@@ -31,7 +31,7 @@ export const ResumeWidget: React.FC = () => {
     <Card style={{ marginBottom: '1.5rem', background: 'var(--bg-surface-elevated)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ background: 'var(--bg-main)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+          <div style={{ background: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
             <FileText size={24} style={{ color: 'var(--primary)' }} />
           </div>
           <div>

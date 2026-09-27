@@ -155,7 +155,13 @@ export const LandingPage: React.FC = () => {
 
         <div className="feature-cards-grid">
           {featureCards.map((card, idx) => (
-            <Card key={idx} hoverLift className="feature-card">
+            <Card
+              key={idx}
+              hoverLift
+              className="feature-card"
+              onClick={() => navigate(card.path)}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="feature-card-icon">{card.icon}</div>
               <h3 className="card-title" style={{ fontSize: '1.15rem', marginBottom: '0.4rem' }}>
                 {card.title}

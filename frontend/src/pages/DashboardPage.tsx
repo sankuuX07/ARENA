@@ -139,9 +139,9 @@ export const DashboardPage: React.FC = () => {
 
       {/* Main Dashboard Layout Grid */}
       <motion.div className="dashboard-grid" variants={staggerItem}>
-        {/* Left Column (Span 8): Module Progress, Quick Actions, Recommendations */}
+        {/* Left Column (Span 8): Widgets, Module Progress, Quick Actions, Recommendations */}
         <div className="dash-col-8">
-          <div className="dashboard-grid">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
             <CompetitionDashboardWidget />
             <RecommendationWidget />
             <AnalyticsWidget />

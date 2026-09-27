@@ -44,13 +44,13 @@ export const CompetitionDashboardWidget: React.FC = () => {
         </p>
       ) : (
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-          <div style={{ flex: 1, background: 'var(--bg-main)', padding: '1rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: liveCount > 0 ? 'var(--success)' : 'var(--text-primary)' }}>{liveCount}</div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Live Now</div>
+          <div style={{ flex: 1, background: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: liveCount > 0 ? 'var(--success)' : 'var(--text-main)' }}>{liveCount}</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Live Now</div>
           </div>
-          <div style={{ flex: 1, background: 'var(--bg-main)', padding: '1rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{upcomingCount}</div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Upcoming</div>
+          <div style={{ flex: 1, background: 'var(--bg-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-main)' }}>{upcomingCount}</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Upcoming</div>
           </div>
         </div>
       )}

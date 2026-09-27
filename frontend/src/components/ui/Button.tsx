@@ -28,7 +28,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseClasses = `btn btn-${variant} btn-${size}`;
-  const widthClass = fullWidth ? 'w-full' : '';
+  const widthClass = fullWidth ? 'btn-full' : '';
   const combinedClasses = `${baseClasses} ${widthClass} ${className}`.trim();
 
   return (
