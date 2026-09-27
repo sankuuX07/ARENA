@@ -11,8 +11,11 @@ class Settings(BaseSettings):
     
     # Groq AI Configuration
     GROQ_API_KEY: str = ""
-    GROQ_MODEL_PRIMARY: str = "qwen/qwen3.8-27b"
-    GROQ_MODEL_FALLBACK: str = "allam-2-7b"
+    GROQ_MODEL_PRIMARY: str = "openai/gpt-oss-120b"
+    GROQ_MODEL_FALLBACK_1: str = "openai/gpt-oss-20b"
+    GROQ_MODEL_FALLBACK_2: str = "qwen/qwen3.8-27b"
+    GROQ_MODEL_FALLBACK_3: str = "llama-3.3-70b-versatile"
+    GROQ_MODEL_FALLBACK_4: str = "llama-3.1-8b-instant"
 
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",

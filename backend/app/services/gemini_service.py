@@ -12,8 +12,11 @@ class GeminiService:
         self.api_key = settings.GROQ_API_KEY
         self.models = [
             m for m in [
-                getattr(settings, "GROQ_MODEL_PRIMARY", "qwen/qwen3.8-27b"),
-                getattr(settings, "GROQ_MODEL_FALLBACK", "allam-2-7b")
+                getattr(settings, "GROQ_MODEL_PRIMARY", "openai/gpt-oss-120b"),
+                getattr(settings, "GROQ_MODEL_FALLBACK_1", "openai/gpt-oss-20b"),
+                getattr(settings, "GROQ_MODEL_FALLBACK_2", "qwen/qwen3.8-27b"),
+                getattr(settings, "GROQ_MODEL_FALLBACK_3", "llama-3.3-70b-versatile"),
+                getattr(settings, "GROQ_MODEL_FALLBACK_4", "llama-3.1-8b-instant")
             ] if m
         ]
         self.cooldowns: Dict[str, float] = {}
