@@ -16,7 +16,7 @@ export const AnalyticsScoreCard: React.FC<Props> = ({ title, score, performanceL
       <div style={{ fontSize: '4rem', fontWeight: 'bold', color: 'var(--primary)', lineHeight: 1 }}>
         {score}
       </div>
-      <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)', marginTop: '0.5rem' }}>
+      <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-main)', marginTop: '0.5rem' }}>
         {performanceLevel}
       </div>
       {subtitle && (

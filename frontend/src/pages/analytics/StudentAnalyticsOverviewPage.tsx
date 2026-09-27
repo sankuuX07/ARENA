@@ -54,7 +54,7 @@ export const StudentAnalyticsOverviewPage: React.FC = () => {
     return (
       <div className="page-container" style={{ textAlign: 'center', padding: '4rem' }}>
         <h2>Error loading analytics</h2>
-        <p style={{ color: 'var(--danger)' }}>{error}</p>
+        <p style={{ color: 'var(--error)' }}>{error}</p>
         <Button onClick={() => fetchOverview(true)}>Try Again</Button>
       </div>
     );
