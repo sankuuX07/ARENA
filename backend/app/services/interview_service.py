@@ -144,30 +144,12 @@ class InterviewService:
 
         # We inject the system instruction temporarily by wrapping it into gemini_service
         try:
-            import google.generativeai as genai
-            if not gemini_service.api_key or gemini_service.api_key == "your_gemini_api_key_here":
-                raise ValueError("AI service not configured. Please configure the backend AI provider credentials.")
-
-            genai.configure(api_key=gemini_service.api_key)
-            model = genai.GenerativeModel(
-                model_name=gemini_service.model_name,
-                system_instruction=system_instruction,
+            return await gemini_service.generate_communication_response(
+                message=latest_input,
+                mode=session.mode,
+                history=history,
+                system_prompt_override=system_instruction
             )
-
-            formatted_history = []
-            for item in history:
-                role = "user" if item.get("role") in ["student", "user"] else "model"
-                content = item.get("content", "").strip()
-                if content:
-                    formatted_history.append({"role": role, "parts": [content]})
-
-            chat = model.start_chat(history=formatted_history)
-            response = chat.send_message(latest_input)
-
-            if response and response.text:
-                return response.text.strip()
-            raise ValueError("AI service temporarily unavailable.")
-
         except Exception as e:
             print(f"[InterviewService] Gemini Error: {e}")
             raise ValueError("AI service temporarily unavailable.")

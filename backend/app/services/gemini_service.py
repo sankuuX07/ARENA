@@ -8,173 +8,186 @@ logger = logging.getLogger(__name__)
 
 
 class GeminiService:
+    """
+    Centralized AI gateway — powered by OpenRouter.
+    All existing ARENA modules call generate_communication_response
+    and generate_json_response unchanged.
+    """
+
     def __init__(self):
-        self.api_key = settings.GROQ_API_KEY
-        self.models = [
-            m for m in [
-                getattr(settings, "GROQ_MODEL_PRIMARY", "openai/gpt-oss-120b"),
-                getattr(settings, "GROQ_MODEL_FALLBACK_1", "openai/gpt-oss-20b"),
-                getattr(settings, "GROQ_MODEL_FALLBACK_2", "qwen/qwen3.8-27b"),
-                getattr(settings, "GROQ_MODEL_FALLBACK_3", "llama-3.3-70b-versatile"),
-                getattr(settings, "GROQ_MODEL_FALLBACK_4", "llama-3.1-8b-instant")
-            ] if m
-        ]
-        self.cooldowns: Dict[str, float] = {}
-        self.cooldown_period = 60.0  # 1 minute cooldown for rate-limited models
+        self.api_key = settings.OPENROUTER_API_KEY
+        self.base_url = settings.OPENROUTER_API_BASE_URL
+        self.model = settings.OPENROUTER_MODEL
 
-    def _get_ordered_models(self) -> List[str]:
-        now = time.time()
-        available = []
-        for model in self.models:
-            if now > self.cooldowns.get(model, 0):
-                available.append(model)
-        
-        # Fallback if all are in cooldown: just return all models to try again
-        return available if available else self.models
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
 
-    def _mark_cooldown(self, model: str):
-        self.cooldowns[model] = time.time() + self.cooldown_period
-        
     def _is_retryable_error(self, e: Exception) -> bool:
+        """
+        Returns True only for temporary provider failures:
+        rate-limit (429) or server errors (500/502/503/504).
+        Auth errors (401/403) and bad-request (400) are NOT retried.
+        """
         try:
-            import groq
-            if isinstance(e, groq.RateLimitError) or isinstance(e, groq.InternalServerError) or isinstance(e, groq.APIConnectionError):
+            from openai import RateLimitError, APIStatusError, APIConnectionError, APITimeoutError
+            if isinstance(e, (RateLimitError, APIConnectionError, APITimeoutError)):
                 return True
-            if isinstance(e, groq.APIStatusError) and getattr(e, "status_code", 400) in [429, 500, 502, 503, 504]:
-                return True
+            if isinstance(e, APIStatusError):
+                return getattr(e, "status_code", 400) in (429, 500, 502, 503, 504)
         except ImportError:
             pass
         return False
+
+    def _get_client(self):
+        """Build an OpenAI-compatible client pointed at OpenRouter's endpoint."""
+        try:
+            from openai import OpenAI
+        except ImportError:
+            raise ImportError(
+                "The 'openai' package is required for OpenRouter integration. "
+                "Run: pip install openai"
+            )
+        return OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            default_headers={
+                "HTTP-Referer": "https://arena.app",
+                "X-Title": "ARENA",
+            },
+        )
+
+    def _check_api_key(self, context: str = ""):
+        if not self.api_key or self.api_key in ("", "your_openrouter_api_key_here"):
+            logger.warning(f"[OpenRouterService{context}] OPENROUTER_API_KEY is not configured.")
+            raise ValueError(
+                "AI service not configured. Please set OPENROUTER_API_KEY in the backend .env file."
+            )
+
+    # ------------------------------------------------------------------
+    # Public API — interface unchanged
+    # ------------------------------------------------------------------
 
     async def generate_communication_response(
         self,
         message: str,
         mode: str = "general",
         history: Optional[List[Dict[str, str]]] = None,
+        system_prompt_override: Optional[str] = None,
     ) -> str:
         """
-        Generate AI communication response using Groq API with automatic model failover.
-        (Kept method name generate_communication_response for compatibility)
+        Generate an AI communication response via OpenRouter.
+        Retries on rate-limit / server errors; aborts on auth / bad-request errors.
         """
-        system_prompt = build_system_prompt(mode)
-
-        if not self.api_key or self.api_key == "your_groq_api_key_here":
-            logger.warning("[GeminiService] GROQ_API_KEY is not configured.")
-            raise ValueError("AI service not configured. Please configure the backend AI provider credentials.")
+        self._check_api_key(" generate_communication_response")
+        system_prompt = system_prompt_override if system_prompt_override else build_system_prompt(mode)
 
         try:
-            from groq import Groq
-            client = Groq(api_key=self.api_key)
+            client = self._get_client()
 
-            messages = [{"role": "system", "content": system_prompt}]
+            messages: List[Dict[str, str]] = [{"role": "system", "content": system_prompt}]
             if history:
                 for item in history:
-                    role = "user" if item.get("role") in ["student", "user"] else "assistant"
+                    role = "user" if item.get("role") in ("student", "user") else "assistant"
                     content = item.get("content", "").strip()
                     if content:
                         messages.append({"role": role, "content": content})
             messages.append({"role": "user", "content": message})
-            
-            models_to_try = self._get_ordered_models()
-            last_error = None
-            
-            for i, model_name in enumerate(models_to_try):
+
+            retries = 0
+            max_retries = 2
+            while retries <= max_retries:
                 try:
-                    chat_completion = client.chat.completions.create(
+                    completion = client.chat.completions.create(
+                        model=self.model,
                         messages=messages,
-                        model=model_name,
                     )
-                    
-                    if chat_completion.choices and chat_completion.choices[0].message:
-                        if i > 0:
-                            logger.info(f"[GeminiService] AI request: Model {model_name} (Fallback {i}) Result: SUCCESS")
-                        return chat_completion.choices[0].message.content.strip()
-                        
-                    raise ValueError("Empty response from AI")
-                    
+                    if completion.choices and completion.choices[0].message:
+                        return completion.choices[0].message.content.strip()
+                    raise ValueError("Empty response from OpenRouter")
+
                 except Exception as e:
-                    last_error = e
-                    if self._is_retryable_error(e):
-                        logger.warning(f"[GeminiService] AI request: Model {model_name} Result: {e.__class__.__name__} Action: FALLBACK")
-                        self._mark_cooldown(model_name)
+                    if self._is_retryable_error(e) and retries < max_retries:
+                        retries += 1
+                        wait = 2 ** retries
+                        logger.warning(
+                            f"[OpenRouterService] Retryable error ({e.__class__.__name__}), "
+                            f"retry {retries}/{max_retries} in {wait}s"
+                        )
+                        time.sleep(wait)
                         continue
-                    else:
-                        # Non-retryable error (e.g. invalid key, bad request)
-                        logger.error(f"[GeminiService] AI request: Model {model_name} Result: {e.__class__.__name__} Action: ABORT (Non-retryable)")
-                        raise e
-            
-            # Exhausted all models
-            logger.error("[GeminiService] AI request failed: All configured AI models are temporarily unavailable.")
-            raise ValueError("AI_PROVIDER_UNAVAILABLE: All configured AI models are temporarily unavailable.")
+                    logger.error(
+                        f"[OpenRouterService] generate_communication_response failed: "
+                        f"{e.__class__.__name__}: {e}"
+                    )
+                    raise e
+
+            raise ValueError("AI_PROVIDER_UNAVAILABLE: OpenRouter is temporarily unavailable.")
 
         except ValueError:
             raise
         except Exception as e:
-            logger.error(f"[GeminiService] Unexpected error: {e}")
+            logger.error(f"[OpenRouterService] Unexpected error: {e}")
             raise ValueError("AI service temporarily unavailable.")
 
     async def generate_json_response(
         self,
         system_instruction: str,
-        message: str
+        message: str,
     ) -> str:
         """
-        Generate structured JSON response using Groq API with automatic model failover.
+        Generate a structured JSON response via OpenRouter.
         """
-        if not self.api_key or self.api_key == "your_groq_api_key_here":
-            logger.warning("[GeminiService] GROQ_API_KEY is not configured. Failing JSON generation.")
-            raise ValueError("AI service not configured. Please configure the backend AI provider credentials.")
+        self._check_api_key(" generate_json_response")
 
         try:
-            from groq import Groq
-            client = Groq(api_key=self.api_key)
-            
-            safe_system_instruction = system_instruction
-            if "json" not in safe_system_instruction.lower():
-                safe_system_instruction += "\nOutput in JSON format."
+            client = self._get_client()
+
+            safe_instruction = system_instruction
+            if "json" not in safe_instruction.lower():
+                safe_instruction += "\nOutput in JSON format."
 
             messages = [
-                {"role": "system", "content": safe_system_instruction},
-                {"role": "user", "content": message}
+                {"role": "system", "content": safe_instruction},
+                {"role": "user", "content": message},
             ]
-            
-            models_to_try = self._get_ordered_models()
-            last_error = None
-            
-            for i, model_name in enumerate(models_to_try):
-                try:
-                    chat_completion = client.chat.completions.create(
-                        messages=messages,
-                        model=model_name,
-                        response_format={"type": "json_object"}
-                    )
 
-                    if chat_completion.choices and chat_completion.choices[0].message:
-                        if i > 0:
-                            logger.info(f"[GeminiService] AI request JSON: Model {model_name} (Fallback {i}) Result: SUCCESS")
-                        return chat_completion.choices[0].message.content.strip()
-                    
-                    raise ValueError("Empty JSON response from AI")
-                
+            retries = 0
+            max_retries = 2
+            while retries <= max_retries:
+                try:
+                    completion = client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        response_format={"type": "json_object"},
+                    )
+                    if completion.choices and completion.choices[0].message:
+                        return completion.choices[0].message.content.strip()
+                    raise ValueError("Empty JSON response from OpenRouter")
+
                 except Exception as e:
-                    last_error = e
-                    if self._is_retryable_error(e):
-                        logger.warning(f"[GeminiService] AI request JSON: Model {model_name} Result: {e.__class__.__name__} Action: FALLBACK")
-                        self._mark_cooldown(model_name)
+                    if self._is_retryable_error(e) and retries < max_retries:
+                        retries += 1
+                        wait = 2 ** retries
+                        logger.warning(
+                            f"[OpenRouterService] JSON retryable error ({e.__class__.__name__}), "
+                            f"retry {retries}/{max_retries} in {wait}s"
+                        )
+                        time.sleep(wait)
                         continue
-                    else:
-                        logger.error(f"[GeminiService] AI request JSON: Model {model_name} Result: {e.__class__.__name__} Action: ABORT (Non-retryable)")
-                        raise e
-            
-            logger.error("[GeminiService] AI JSON request failed: All configured AI models are temporarily unavailable.")
-            raise ValueError("AI_PROVIDER_UNAVAILABLE: All configured AI models are temporarily unavailable.")
+                    logger.error(
+                        f"[OpenRouterService] generate_json_response failed: "
+                        f"{e.__class__.__name__}: {e}"
+                    )
+                    raise e
+
+            raise ValueError("AI_PROVIDER_UNAVAILABLE: OpenRouter is temporarily unavailable.")
 
         except ValueError:
             raise
         except Exception as e:
-            logger.error(f"[GeminiService] Unexpected error for JSON: {e}")
+            logger.error(f"[OpenRouterService] Unexpected JSON error: {e}")
             raise e
 
+
 gemini_service = GeminiService()
-
-

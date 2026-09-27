@@ -9,13 +9,10 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
     ENVIRONMENT: str = "development"
     
-    # Groq AI Configuration
-    GROQ_API_KEY: str = ""
-    GROQ_MODEL_PRIMARY: str = "openai/gpt-oss-120b"
-    GROQ_MODEL_FALLBACK_1: str = "openai/gpt-oss-20b"
-    GROQ_MODEL_FALLBACK_2: str = "qwen/qwen3.8-27b"
-    GROQ_MODEL_FALLBACK_3: str = "llama-3.3-70b-versatile"
-    GROQ_MODEL_FALLBACK_4: str = "llama-3.1-8b-instant"
+    # OpenRouter Configuration
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_API_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODEL: str = "google/gemini-2.0-flash-001"
 
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
