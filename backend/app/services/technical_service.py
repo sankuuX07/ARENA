@@ -88,7 +88,7 @@ class TechnicalService:
     ) -> TechnicalQuestion:
         
         prompt = get_technical_question_prompt(language, topic, difficulty, q_type)
-        response_text = await gemini_service.generate_content(prompt)
+        response_text = await gemini_service.generate_json_response('Respond ONLY with valid JSON.', prompt)
         
         # Validation layer
         try:

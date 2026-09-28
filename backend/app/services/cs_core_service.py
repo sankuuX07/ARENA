@@ -396,7 +396,7 @@ class CSCoreService:
     ) -> TechnicalQuestion:
         
         prompt = get_cs_core_question_prompt(subject_name, topic_name, difficulty, q_type)
-        response_text = await gemini_service.generate_content(prompt)
+        response_text = await gemini_service.generate_json_response('Respond ONLY with valid JSON.', prompt)
         
         try:
             clean_text = response_text.replace("```json", "").replace("```", "").strip()
