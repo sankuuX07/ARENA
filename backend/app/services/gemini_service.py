@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class GeminiService:
     """
-    Centralized AI gateway — powered by local Ollama (llama3.1).
+    Centralized AI gateway — powered by local Ollama (gemma4:31b-cloud).
     All existing ARENA modules call generate_communication_response
     and generate_json_response unchanged.
     """

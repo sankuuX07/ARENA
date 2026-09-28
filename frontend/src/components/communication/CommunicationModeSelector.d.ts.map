@@ -1,0 +1,1 @@
+{"version":3,"file":"CommunicationModeSelector.d.ts","sourceRoot":"","sources":["CommunicationModeSelector.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAM1B,MAAM,WAAW,8BAA8B;IAC7C,YAAY,EAAE,CAAC,IAAI,EAAE,SAAS,GAAG,SAAS,GAAG,QAAQ,GAAG,aAAa,GAAG,kBAAkB,KAAK,IAAI,CAAC;CACrG;AAED,eAAO,MAAM,yBAAyB,EAAE,KAAK,CAAC,EAAE,CAAC,8BAA8B,CAmH9E,CAAC"}

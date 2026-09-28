@@ -1,0 +1,11 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import React from 'react';
+import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { PlacementSimulation } from '../../types/placement';
+import { Briefcase, Clock, Play } from 'lucide-react';
+export const SimulationCard = ({ simulation, onStart, isLoading = false }) => {
+    return (_jsxs(Card, { className: "simulation-card", children: [_jsx("div", { className: "card-header", style: { marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }, children: _jsxs("div", { children: [_jsxs("div", { style: { display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }, children: [_jsx(Briefcase, { size: 20, style: { color: 'var(--primary)' } }), _jsx("h3", { style: { margin: 0, fontSize: '1.2rem' }, children: simulation.title })] }), _jsx("p", { style: { color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }, children: simulation.description })] }) }), _jsxs("div", { style: { display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }, children: [_jsxs(Badge, { variant: "info", style: { display: 'flex', alignItems: 'center', gap: '0.25rem' }, children: [_jsx(Clock, { size: 14 }), "~", simulation.estimatedDurationMinutes, " mins"] }), _jsxs(Badge, { variant: "primary", children: [simulation.totalRounds, " Rounds"] })] }), _jsxs("div", { style: { marginBottom: '1.5rem' }, children: [_jsx("h4", { style: { fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }, children: "Round Sequence" }), _jsx("ul", { style: { listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem', color: 'var(--text-main)' }, children: simulation.rounds.map((round) => (_jsxs("li", { style: { marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }, children: [_jsxs("span", { style: { color: 'var(--primary)', fontWeight: 'bold' }, children: [round.order, "."] }), round.name] }, round.roundId))) })] }), _jsx(Button, { onClick: () => onStart(simulation.simulationId), fullWidth: true, disabled: isLoading, icon: _jsx(Play, { size: 16 }), children: isLoading ? 'Starting...' : 'Start Simulation' })] }));
+};
+//# sourceMappingURL=SimulationCard.js.map

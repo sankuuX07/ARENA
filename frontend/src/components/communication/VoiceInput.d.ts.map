@@ -1,0 +1,1 @@
+{"version":3,"file":"VoiceInput.d.ts","sourceRoot":"","sources":["VoiceInput.tsx"],"names":[],"mappings":"AAAA,OAAO,KAA8B,MAAM,OAAO,CAAC;AAGnD,MAAM,WAAW,eAAe;IAC9B,cAAc,EAAE,CAAC,IAAI,EAAE,MAAM,KAAK,IAAI,CAAC;IACvC,QAAQ,CAAC,EAAE,OAAO,CAAC;CACpB;AAED,eAAO,MAAM,UAAU,EAAE,KAAK,CAAC,EAAE,CAAC,eAAe,CA4GhD,CAAC"}

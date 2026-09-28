@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     
     # Ollama Local AI Configuration
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3.1"
+    OLLAMA_MODEL: str = "gemma4:31b-cloud"
 
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",

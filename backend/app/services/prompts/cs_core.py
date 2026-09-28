@@ -35,10 +35,10 @@ RULES:
 OUTPUT FORMAT:
 You MUST return ONLY a valid JSON array of objects matching this schema. Do NOT include markdown code blocks (```json ... ```) or any other text.
 
-{[
-  {
+[
+  {{
       "questionId": "tech_q_<random_hex>",
-      "language": "cs_core",
+      "language": "cs",
       "topic": "{topic}",
       "difficulty": "{difficulty.value}",
       "questionType": "{question_type.value}",
@@ -47,15 +47,7 @@ You MUST return ONLY a valid JSON array of objects matching this schema. Do NOT 
       "options": ["<Option 1>", "<Option 2>", "<Option 3>", "<Option 4>"],
       "correctOption": <Integer 0-3 representing the index of the correct option in the options array>,
       "explanation": "<Detailed explanation of why the correct option is right and others are wrong.>"
-  }
-]",
-    "difficulty": "{difficulty.value}",
-    "questionType": "{question_type.value}",
-    "question": "<The question text. Be clear and specific.>",
-    "codeSnippet": "<Optional pseudocode or block if the question requires analyzing structures. Use null if not applicable.>",
-    "options": ["<Option 1>", "<Option 2>", "<Option 3>", "<Option 4>"],
-    "correctOption": <Integer 0-3 representing the index of the correct option in the options array>,
-    "explanation": "<Detailed explanation of why the correct option is right and others are wrong.>"
-}}
+  }}
+]
 """
     return prompt
