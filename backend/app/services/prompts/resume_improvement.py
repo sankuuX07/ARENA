@@ -29,10 +29,8 @@ You MUST respond with valid JSON containing a LIST of improvement suggestions fo
 Do not include any markdown formatting outside of the JSON array. Output strictly JSON.
 """
 
-def build_resume_improvement_prompt(resume_content: str, screening_feedback: str, section: str) -> str:
-    return f"""
-{RESUME_IMPROVEMENT_SYSTEM_PROMPT}
-
+def build_resume_improvement_prompt(resume_content: str, screening_feedback: str, section: str):
+    user_msg = f"""
 ### INPUTS:
 <resume_content>
 {resume_content}
@@ -48,3 +46,4 @@ def build_resume_improvement_prompt(resume_content: str, screening_feedback: str
 
 Analyze the <section_to_improve> within the context of the <resume_content> and <screening_feedback>. Provide up to 3 high-impact improvement suggestions for that specific section.
 """
+    return RESUME_IMPROVEMENT_SYSTEM_PROMPT, user_msg

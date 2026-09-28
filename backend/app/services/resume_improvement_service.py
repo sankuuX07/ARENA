@@ -137,13 +137,13 @@ class ResumeImprovementService:
 
         screening_feedback_mock = "Focus on actionable impact and professional phrasing."
 
-        prompt = build_resume_improvement_prompt(
+        system_prompt, user_msg = build_resume_improvement_prompt(
             resume_content=resume_content,
             screening_feedback=screening_feedback_mock,
             section=section
         )
 
-        ai_response = await gemini_service.generate_json_response(prompt)
+        ai_response = await gemini_service.generate_json_response(system_prompt, user_msg)
         
         if not ai_response:
             raise ValueError("Failed to generate AI suggestions")
