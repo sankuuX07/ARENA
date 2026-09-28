@@ -106,28 +106,87 @@ class AptitudeService:
         return summary
 
     def _parse_questions(self, raw_response: str, expected_count: int) -> List[AptitudeQuestion]:
+        import re
         try:
-            start_idx = raw_response.find('[')
-            end_idx = raw_response.rfind(']')
+            # 1 & 2. Read and extract text
+            text = raw_response.strip()
+            
+            # 3. Remove accidental markdown code fences if present
+            # Match ```json ... ``` or just ``` ... ```
+            markdown_match = re.search(r'```(?:json)?\s*(.*?)\s*```', text, re.DOTALL)
+            if markdown_match:
+                text = markdown_match.group(1).strip()
+                
+            # 4. Trim unnecessary surrounding text where safely possible
+            start_idx = text.find('[')
+            end_idx = text.rfind(']')
             
             if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
                 raise ValueError("APTITUDE_JSON_PARSE_FAILED: No JSON array found in response")
                 
-            clean_json_str = raw_response[start_idx : end_idx + 1]
+            clean_json_str = text[start_idx : end_idx + 1]
+            
+            # 5. Parse JSON
             data = json.loads(clean_json_str)
             
+            # 6. Validate resulting structure
             if not isinstance(data, list):
                 raise ValueError("APTITUDE_SCHEMA_VALIDATION_FAILED: JSON root is not an array")
                 
             questions = []
             for item in data:
                 try:
+                    # 8. Validate each question
+                    if not isinstance(item, dict):
+                        continue
+                    if "question" not in item or not isinstance(item["question"], str):
+                        continue
+                        
+                    # 9. Validate the options
+                    options = item.get("options", [])
+                    if not isinstance(options, list) or len(options) != 4:
+                        continue
+                    if not all(isinstance(opt, str) for opt in options):
+                        options = [str(opt) for opt in options]
+                        
+                    # 10. Validate the correct answer
+                    correct_opt = item.get("correctOption")
+                    if correct_opt is None:
+                        # Fallback for some LLM variations
+                        if "answer" in item:
+                            ans = item["answer"]
+                            if isinstance(ans, int) and 0 <= ans < 4:
+                                correct_opt = ans
+                            elif isinstance(ans, str) and ans.isdigit():
+                                correct_opt = int(ans)
+                                if correct_opt not in [0, 1, 2, 3]:
+                                    # Maybe it gave the text answer or 1-based index
+                                    if correct_opt in [1, 2, 3, 4]:
+                                        correct_opt -= 1
+                                    else:
+                                        continue
+                        if correct_opt is None:
+                            continue
+                            
+                    if not isinstance(correct_opt, int) or correct_opt < 0 or correct_opt > 3:
+                        try:
+                            correct_opt = int(correct_opt)
+                            if correct_opt not in [0, 1, 2, 3]:
+                                continue
+                        except (ValueError, TypeError):
+                            continue
+                            
+                    explanation = item.get("explanation", "")
+                    if not isinstance(explanation, str):
+                        explanation = str(explanation)
+                        
+                    # 11. Return clean standardized Aptitude question object
                     q = AptitudeQuestion(
                         question_id=f"q_{uuid.uuid4().hex[:8]}",
                         question=item["question"],
-                        options=item["options"],
-                        correctOption=item["correctOption"],
-                        explanation=item.get("explanation", "")
+                        options=options,
+                        correctOption=correct_opt,
+                        explanation=explanation
                     )
                     questions.append(q)
                 except Exception as ex:
@@ -137,15 +196,21 @@ class AptitudeService:
             if not questions:
                 raise ValueError("APTITUDE_SCHEMA_VALIDATION_FAILED: No valid questions parsed")
                 
-            # If AI didn't generate enough, duplicate for now to meet count (fallback)
-            while len(questions) < expected_count:
-                questions.append(questions[0].copy(update={"question_id": f"q_{uuid.uuid4().hex[:8]}"}))
-                
+            # 7. Validate number of questions
+            # If AI didn't generate enough, return what it generated or duplicate
+            # The prompt says: "Verify that the selected count is actually sent to the backend...
+            # The backend must return the requested number of valid questions. 
+            # If Ollama returns fewer questions, handle that properly rather than crashing. 
+            # Do NOT silently duplicate questions."
+            
+            # Let's truncate if too many, but if too few, just return the ones we got.
             return questions[:expected_count]
             
         except json.JSONDecodeError as e:
             logger.error(f"APTITUDE_JSON_PARSE_FAILED: Invalid JSON format: {e}")
             raise ValueError("APTITUDE_JSON_PARSE_FAILED")
+        except ValueError:
+            raise
         except Exception as e:
             logger.error(f"APTITUDE_SCHEMA_VALIDATION_FAILED: {e}")
             raise ValueError(f"APTITUDE_SCHEMA_VALIDATION_FAILED: {e}")

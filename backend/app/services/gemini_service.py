@@ -50,7 +50,7 @@ class GeminiService:
             "stream": False,
             "options": {
                 "temperature": 0.7,
-                "num_predict": 512,
+                "num_predict": 4096,
             }
         }).encode("utf-8")
 
