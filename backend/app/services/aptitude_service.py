@@ -107,31 +107,47 @@ class AptitudeService:
 
     def _parse_questions(self, raw_response: str, expected_count: int) -> List[AptitudeQuestion]:
         try:
-            clean_json_str = raw_response
-            if "```json" in raw_response:
-                clean_json_str = raw_response.split("```json")[1].split("```")[0].strip()
-            elif "```" in raw_response:
-                clean_json_str = raw_response.split("```")[1].split("```")[0].strip()
+            start_idx = raw_response.find('[')
+            end_idx = raw_response.rfind(']')
+            
+            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
+                raise ValueError("APTITUDE_JSON_PARSE_FAILED: No JSON array found in response")
                 
+            clean_json_str = raw_response[start_idx : end_idx + 1]
             data = json.loads(clean_json_str)
+            
+            if not isinstance(data, list):
+                raise ValueError("APTITUDE_SCHEMA_VALIDATION_FAILED: JSON root is not an array")
+                
             questions = []
-            for i, item in enumerate(data):
-                q = AptitudeQuestion(
-                    question_id=f"q_{uuid.uuid4().hex[:8]}",
-                    question=item["question"],
-                    options=item["options"],
-                    correctOption=item["correctOption"],
-                    explanation=item["explanation"]
-                )
-                questions.append(q)
+            for item in data:
+                try:
+                    q = AptitudeQuestion(
+                        question_id=f"q_{uuid.uuid4().hex[:8]}",
+                        question=item["question"],
+                        options=item["options"],
+                        correctOption=item["correctOption"],
+                        explanation=item.get("explanation", "")
+                    )
+                    questions.append(q)
+                except Exception as ex:
+                    logger.warning(f"Skipping malformed question object: {ex}")
+                    continue
+                
+            if not questions:
+                raise ValueError("APTITUDE_SCHEMA_VALIDATION_FAILED: No valid questions parsed")
                 
             # If AI didn't generate enough, duplicate for now to meet count (fallback)
-            while len(questions) < expected_count and len(questions) > 0:
+            while len(questions) < expected_count:
                 questions.append(questions[0].copy(update={"question_id": f"q_{uuid.uuid4().hex[:8]}"}))
                 
             return questions[:expected_count]
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"APTITUDE_JSON_PARSE_FAILED: Invalid JSON format: {e}")
+            raise ValueError("APTITUDE_JSON_PARSE_FAILED")
         except Exception as e:
-            logger.warning(f"Failed to parse AI aptitude questions JSON: {e}")
-            raise ValueError("Failed to parse AI aptitude questions.")
+            logger.error(f"APTITUDE_SCHEMA_VALIDATION_FAILED: {e}")
+            raise ValueError(f"APTITUDE_SCHEMA_VALIDATION_FAILED: {e}")
 
 aptitude_service = AptitudeService()
