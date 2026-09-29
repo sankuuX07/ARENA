@@ -247,7 +247,7 @@ export const AssessmentSessionPage: React.FC = () => {
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
             <h3 style={{ margin: '0 0 1rem', fontSize: '1rem' }}>Navigator</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {session.questions.map((q: any, idx: number) => {
+              {(session.questions || []).map((q: any, idx: number) => {
                 const ans = session.answers.find((a: AssessmentAnswer) => a.questionId === q.questionId);
                 const isCurrent = idx === currentIndex;
                 const isAnswered = ans && (ans.selectedOption !== null || !!ans.textResponse);

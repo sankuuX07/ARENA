@@ -252,7 +252,7 @@ export const AptitudePage: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {currentQ.options.map((opt, idx) => {
+            {currentQ.options?.map((opt, idx) => {
               const isSelected = selectedOpt === idx;
               let bgColor = 'var(--bg-surface-elevated)';
               let borderColor = 'var(--border-color)';

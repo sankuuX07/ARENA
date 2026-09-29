@@ -101,14 +101,14 @@ export const ResumeImprovementSessionPage: React.FC = () => {
       </Card>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {summary.suggestions.length === 0 ? (
+        {(summary.suggestions || []).length === 0 ? (
           <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-muted)' }}>
             <Wand2 size={48} style={{ opacity: 0.5, marginBottom: '1rem' }} />
             <h3>No suggestions yet</h3>
             <p>Select a section above and click Generate to get started.</p>
           </div>
         ) : (
-          summary.suggestions
+          (summary.suggestions || [])
             .sort((a: any, b: any) => {
               const pMap: Record<string, number> = { high: 0, medium: 1, low: 2 };
               return pMap[a.priority] - pMap[b.priority];

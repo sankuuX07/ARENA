@@ -370,7 +370,7 @@ export const FormalCommunicationPage: React.FC = () => {
                 <div>
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--success-main)', marginBottom: '0.5rem' }}>STRENGTHS</div>
                   <ul style={{ paddingLeft: '1.25rem', margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    {latestEvaluation.strengths.map((s, idx) => (
+                    {(latestEvaluation.strengths || []).map((s, idx) => (
                       <li key={idx} style={{ marginBottom: '0.25rem' }}>{s}</li>
                     ))}
                   </ul>
@@ -378,7 +378,7 @@ export const FormalCommunicationPage: React.FC = () => {
                 <div>
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--warning-main)', marginBottom: '0.5rem' }}>TO IMPROVE</div>
                   <ul style={{ paddingLeft: '1.25rem', margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    {latestEvaluation.improvements.map((s, idx) => (
+                    {(latestEvaluation.improvements || []).map((s, idx) => (
                       <li key={idx} style={{ marginBottom: '0.25rem' }}>{s}</li>
                     ))}
                   </ul>

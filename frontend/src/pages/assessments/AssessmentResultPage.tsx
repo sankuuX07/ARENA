@@ -93,7 +93,7 @@ export const AssessmentResultPage: React.FC = () => {
             <BarChart size={20} /> Section Performance
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {result.sections.map((sec) => (
+            {(result.sections || []).map((sec) => (
               <div key={sec.sectionId}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
                   <span>{sec.title}</span>
@@ -113,7 +113,7 @@ export const AssessmentResultPage: React.FC = () => {
             <h3 style={{ margin: '0 0 1rem', color: 'var(--success)' }}>Strengths</h3>
             {result.strengths.length > 0 ? (
               <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--text-secondary)' }}>
-                {result.strengths.map(s => <li key={s}>{s}</li>)}
+                {(result.strengths || []).map(s => <li key={s}>{s}</li>)}
               </ul>
             ) : <span style={{ color: 'var(--text-muted)' }}>Not enough data.</span>}
           </div>
@@ -122,7 +122,7 @@ export const AssessmentResultPage: React.FC = () => {
             <h3 style={{ margin: '0 0 1rem', color: 'var(--warning)' }}>Focus Areas</h3>
             {result.improvementAreas.length > 0 ? (
               <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--text-secondary)' }}>
-                {result.improvementAreas.map(s => <li key={s}>{s}</li>)}
+                {(result.improvementAreas || []).map(s => <li key={s}>{s}</li>)}
               </ul>
             ) : <span style={{ color: 'var(--text-muted)' }}>Keep practicing!</span>}
           </div>

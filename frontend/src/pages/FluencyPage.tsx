@@ -502,7 +502,7 @@ export const FluencyPage: React.FC = () => {
                     ✓ Key Strengths
                   </div>
                   <ul style={{ paddingLeft: '1.1rem', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    {latestEvaluation.strengths.map((s, i) => (
+                    {(latestEvaluation.strengths || []).map((s, i) => (
                       <li key={i}>{s}</li>
                     ))}
                   </ul>
@@ -513,7 +513,7 @@ export const FluencyPage: React.FC = () => {
                     • Areas to Refine
                   </div>
                   <ul style={{ paddingLeft: '1.1rem', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    {latestEvaluation.improvements.map((imp, i) => (
+                    {(latestEvaluation.improvements || []).map((imp, i) => (
                       <li key={i}>{imp}</li>
                     ))}
                   </ul>

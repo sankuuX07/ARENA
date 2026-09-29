@@ -127,7 +127,7 @@ export const GroupDiscussionPage: React.FC = () => {
         
         setCurrentRound(data.round);
         
-        const aiMessages = data.ai_responses.map(resp => ({
+        const aiMessages = (data.ai_responses || []).map(resp => ({
           role: resp.speaker,
           content: resp.content
         }));
@@ -408,14 +408,14 @@ export const GroupDiscussionPage: React.FC = () => {
               <Card>
                 <h3 style={{ marginBottom: '1rem', color: 'var(--success)' }}>Strengths</h3>
                 <ul style={{ paddingLeft: '1.5rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {finalResult.evaluation.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                  {(finalResult.evaluation.strengths || []).map((s, i) => <li key={i}>{s}</li>)}
                 </ul>
               </Card>
 
               <Card>
                 <h3 style={{ marginBottom: '1rem', color: 'var(--warning)' }}>Areas to Improve</h3>
                 <ul style={{ paddingLeft: '1.5rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {finalResult.evaluation.improvements.map((s, i) => <li key={i}>{s}</li>)}
+                  {(finalResult.evaluation.improvements || []).map((s, i) => <li key={i}>{s}</li>)}
                 </ul>
               </Card>
             </div>
@@ -425,7 +425,7 @@ export const GroupDiscussionPage: React.FC = () => {
             <Card>
               <h3 style={{ marginBottom: '1.25rem' }}>Sample Improvements</h3>
               <div style={{ display: 'grid', gap: '1.5rem' }}>
-                {finalResult.evaluation.improved_responses.map((ir, i) => (
+                {(finalResult.evaluation.improved_responses || []).map((ir, i) => (
                   <div key={i} style={{ padding: '1rem', background: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius-md)' }}>
                     <div style={{ color: 'var(--error)', marginBottom: '0.5rem', fontStyle: 'italic' }}>
                       <span style={{ fontWeight: 600, color: 'var(--text-main)', fontStyle: 'normal' }}>Student statement: </span>
