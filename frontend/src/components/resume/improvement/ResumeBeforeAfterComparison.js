@@ -1,6 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import React from 'react';
-export const ResumeBeforeAfterComparison = ({ originalText, suggestedText }) => {
-    return (_jsxs("div", { style: { display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem', marginBottom: '1rem' }, children: [_jsxs("div", { style: { flex: 1, padding: '1rem', background: 'var(--danger-light)', borderRadius: 'var(--radius-md)', border: '1px solid var(--danger)' }, children: [_jsx("div", { style: { fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--danger)', marginBottom: '0.5rem', textTransform: 'uppercase' }, children: "Before (Original)" }), _jsx("p", { style: { margin: 0, color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }, children: originalText || '(No previous content)' })] }), _jsxs("div", { style: { flex: 1, padding: '1rem', background: 'var(--success-light)', borderRadius: 'var(--radius-md)', border: '1px solid var(--success)' }, children: [_jsx("div", { style: { fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--success)', marginBottom: '0.5rem', textTransform: 'uppercase' }, children: "After (Suggested)" }), _jsx("p", { style: { margin: 0, color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }, children: suggestedText })] })] }));
-};
-//# sourceMappingURL=ResumeBeforeAfterComparison.js.map

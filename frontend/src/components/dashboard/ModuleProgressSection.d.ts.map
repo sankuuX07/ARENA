@@ -1,1 +1,0 @@
-{"version":3,"file":"ModuleProgressSection.d.ts","sourceRoot":"","sources":["ModuleProgressSection.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAG1B,OAAO,EAAE,kBAAkB,EAAE,MAAM,iCAAiC,CAAC;AAIrE,MAAM,WAAW,0BAA0B;IACzC,OAAO,EAAE,kBAAkB,EAAE,CAAC;CAC/B;AAED,eAAO,MAAM,qBAAqB,EAAE,KAAK,CAAC,EAAE,CAAC,0BAA0B,CAsCtE,CAAC"}
