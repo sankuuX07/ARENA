@@ -221,6 +221,19 @@ export const AptitudePage: React.FC = () => {
   // Active or Review Mode Question Display
   if (session && (isReviewMode || !isSessionComplete)) {
     const currentQ = questions[currentIndex];
+
+    if (!currentQ) {
+      return (
+        <div style={{ maxWidth: 800, margin: '0 auto', width: '100%', padding: '4rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--error)' }}>Could not load questions.</div>
+          <div style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>The AI may still be generating. Please try starting a new session.</div>
+          <Button variant="outline" onClick={() => { setSession(null); setQuestions([]); setIsSessionComplete(false); }}>
+            Back to Setup
+          </Button>
+        </div>
+      );
+    }
+
     const selectedOpt = answers[currentQ.question_id];
     
     return (
