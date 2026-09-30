@@ -82,7 +82,13 @@ export const CSessionPage: React.FC = () => {
 
   if (loading) return <div style={{ padding: '4rem', textAlign: 'center' }}>Generating C Programming Questions...<br/><small style={{color:'var(--text-secondary)'}}>(This may take a moment for larger sets)</small></div>;
   if (error) return <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--error)' }}>{error}</div>;
-  if (!session || session.questions.length === 0) return null;
+  if (!session || session.questions.length === 0) return (
+    <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--error)' }}>
+      <div style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Could not load session questions.</div>
+      <div style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>The AI may be busy or unavailable. Please try again.</div>
+      <Button variant="outline" onClick={() => window.history.back()}>Go Back</Button>
+    </div>
+  );
 
   const currentQ = session.questions[currentIndex];
   const isConceptual = !currentQ.options || currentQ.options.length === 0;

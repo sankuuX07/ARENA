@@ -16,7 +16,7 @@ const AdminDashboardPage: React.FC = () => {
 
   if (loading) return <div className="text-gray-400">Loading dashboard...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
-  if (!stats) return null;
+  if (!stats) return <div style={{ padding: '2rem', color: 'var(--text-secondary)' }}>No stats available.</div>;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
