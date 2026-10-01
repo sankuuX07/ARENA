@@ -71,16 +71,22 @@ export const startAptitudeSession = async (
     { uid, category, difficulty, num_questions: numQuestions, topic }
   );
 
-  const sessionRef = doc(db!, `users/${uid}/aptitudeSessions/${data.session_id}`);
-  await setDoc(sessionRef, {
-    category,
-    topic: topic || null,
-    difficulty,
-    status: 'active',
-    questionCount: numQuestions,
-    startedAt: serverTimestamp(),
-    lastActivityAt: serverTimestamp(),
-  });
+  const sessionRef = db ? doc(db, `users/${uid}/aptitudeSessions/${data.session_id}`) : null;
+  if (sessionRef) {
+    try {
+      await setDoc(sessionRef, {
+        category,
+        topic: topic || null,
+        difficulty,
+        status: 'active',
+        questionCount: numQuestions,
+        startedAt: serverTimestamp(),
+        lastActivityAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn('[AptitudeService] Firestore session save failed (non-critical):', err);
+    }
+  }
 
   return data;
 };
@@ -114,17 +120,23 @@ export const completeAptitudeSession = async (
 
   data.time_taken = timeTakenSecs;
 
-  const sessionRef = doc(db!, `users/${uid}/aptitudeSessions/${sessionId}`);
-  await updateDoc(sessionRef, {
-    status: 'completed',
-    completedAt: serverTimestamp(),
-    score: data.score,
-    accuracy: data.accuracy,
-    correctAnswers: data.correct,
-    incorrectAnswers: data.incorrect,
-    unanswered: data.unanswered,
-    timeTaken: timeTakenSecs
-  });
+  const sessionRef2 = db ? doc(db, `users/${uid}/aptitudeSessions/${sessionId}`) : null;
+  if (sessionRef2) {
+    try {
+      await updateDoc(sessionRef2, {
+        status: 'completed',
+        completedAt: serverTimestamp(),
+        score: data.score,
+        accuracy: data.accuracy,
+        correctAnswers: data.correct,
+        incorrectAnswers: data.incorrect,
+        unanswered: data.unanswered,
+        timeTaken: timeTakenSecs
+      });
+    } catch (err) {
+      console.warn('[AptitudeService] Firestore session update failed (non-critical):', err);
+    }
+  }
 
   let activityType: any = 'aptitude_session';
   if (category === 'quantitative') activityType = 'quantitative_session';
@@ -144,7 +156,11 @@ export const completeAptitudeSession = async (
 };
 
 export const getAptitudeHistory = async (uid: string): Promise<AptitudeHistoryItem[]> => {
-  const sessionsRef = collection(db!, `users/${uid}/aptitudeSessions`);
+  if (!db) {
+    console.warn('[AptitudeService] Firestore not initialized, returning empty history');
+    return [];
+  }
+  const sessionsRef = collection(db, `users/${uid}/aptitudeSessions`);
   const q = query(
     sessionsRef,
     orderBy('startedAt', 'desc')

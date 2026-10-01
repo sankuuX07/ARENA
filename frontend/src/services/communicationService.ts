@@ -110,19 +110,14 @@ export const sendChatMessage = async (
     content: m.content,
   }));
 
-  let aiResponseText = '';
-  try {
-    const apiRes = await ApiService.post<ChatApiResponse>('/v1/communication/chat', {
-      session_id: sessionId,
-      message: messageContent.trim(),
-      mode,
-      history: formattedHistory,
-    });
-    aiResponseText = apiRes.message;
-  } catch (err: any) {
-    console.warn('[CommunicationService] API request failed:', err);
-    aiResponseText = "AI service is not configured. Please configure the backend AI provider credentials.";
-  }
+  // Call backend — let errors propagate to the caller so the UI can display them
+  const apiRes = await ApiService.post<ChatApiResponse>('/v1/communication/chat', {
+    session_id: sessionId,
+    message: messageContent.trim(),
+    mode,
+    history: formattedHistory,
+  });
+  const aiResponseText = apiRes.message;
 
   const aiMessage: CommunicationMessage = {
     id: `msg_ai_${Date.now()}`,

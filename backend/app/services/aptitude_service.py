@@ -101,9 +101,8 @@ class AptitudeService:
             completed_at=datetime.utcnow().isoformat() + "Z",
             questions_with_answers=real_questions
         )
-        # Clear memory
+        # Clear session from memory after building result
         self._sessions.pop(request.session_id, None)
-        return summary
 
     def _parse_questions(self, raw_response: str, expected_count: int) -> List[AptitudeQuestion]:
         import re
