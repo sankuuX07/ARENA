@@ -1,25 +1,28 @@
 # -*- coding: utf-8 -*-
 """
-ARENA Module Diagnostic - ASCII output only
+ARENA Module Diagnostic
+BASE = http://localhost:8000/api/v1  (already includes /v1)
+So endpoint paths below must NOT add /v1/ prefix.
+Backend route: /api + /v1/communication + /chat = /api/v1/communication/chat
 """
 import sys
-import os
-os.environ['PYTHONIOENCODING'] = 'utf-8'
 sys.stdout.reconfigure(encoding='utf-8')
 
 import urllib.request
 import urllib.error
 import json
 
-BASE = "http://localhost:8000/api/v1"
+BASE = "http://localhost:8000/api"  # matches API_V1_STR="/api"
+
 HEADERS = {
     "Content-Type": "application/json",
     "Authorization": "Bearer local-dev-token-testuid123"
 }
 
 def post(path, body, timeout=180):
+    url = f"{BASE}{path}"
     data = json.dumps(body).encode("utf-8")
-    req = urllib.request.Request(f"{BASE}{path}", data=data, headers=HEADERS, method="POST")
+    req = urllib.request.Request(url, data=data, headers=HEADERS, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, json.loads(r.read().decode("utf-8"))
@@ -30,7 +33,8 @@ def post(path, body, timeout=180):
         return 0, str(ex)
 
 def get(path, timeout=30):
-    req = urllib.request.Request(f"{BASE}{path}", headers=HEADERS, method="GET")
+    url = f"{BASE}{path}"
+    req = urllib.request.Request(url, headers=HEADERS, method="GET")
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, json.loads(r.read().decode("utf-8"))
@@ -40,9 +44,18 @@ def get(path, timeout=30):
     except Exception as ex:
         return 0, str(ex)
 
+# First verify backend is reachable
+sc, rb = get("/health")
+if sc == 0:
+    print(f"BACKEND OFFLINE: {rb}")
+    print("Start the backend with: venv\\Scripts\\python.exe -m uvicorn app.main:app --port 8000")
+    sys.exit(1)
+else:
+    print(f"Backend: {sc} - {str(rb)[:60]}")
+
 results = {}
 
-print("=" * 60)
+print("\n" + "=" * 60)
 print("ARENA MODULE DIAGNOSTIC")
 print("=" * 60)
 
@@ -54,13 +67,13 @@ status, res = post("/v1/communication/chat", {
     "history": []
 })
 if status == 200 and isinstance(res, dict):
-    ai_msg = res.get("message", "")[:100]
+    ai_msg = res.get("message", "")[:120]
     print(f"  PASS - Status {status}")
-    print(f"  AI: {ai_msg}")
+    print(f"  AI reply: {ai_msg}")
     results["communication"] = "PASS"
 else:
-    print(f"  FAIL - Status {status}: {str(res)[:300]}")
-    results["communication"] = f"FAIL ({status})"
+    print(f"  FAIL - Status {status}: {str(res)[:400]}")
+    results["communication"] = f"FAIL ({status}): {str(res)[:100]}"
 
 # ── APTITUDE ───────────────────────────────────────────────
 print("\n[2] APTITUDE MODULE")
@@ -68,13 +81,12 @@ status, res = post("/v1/aptitude/start", {
     "uid": "testuid123",
     "category": "quantitative",
     "difficulty": "easy",
-    "num_questions": 2,
-    "topic": "Number System"
+    "num_questions": 2
 })
 if status == 200 and isinstance(res, dict):
     qcount = len(res.get("questions", []))
     session_id = res.get("session_id")
-    print(f"  PASS - Session: {session_id}, Questions: {qcount}")
+    print(f"  START PASS - Session: {session_id}, Questions: {qcount}")
     if qcount > 0:
         q = res["questions"][0]
         print(f"  First Q: {str(q.get('question','?'))[:80]}")
@@ -89,19 +101,22 @@ if status == 200 and isinstance(res, dict):
             "answers": answers
         })
         if sc2 == 200 and isinstance(r2, dict):
-            print(f"  COMPLETE PASS - Score: {r2.get('score')}/{r2.get('total_questions')}, Accuracy: {r2.get('accuracy')}%")
+            print(f"  COMPLETE PASS - Score:{r2.get('score')}/{r2.get('total_questions')}, Acc:{r2.get('accuracy')}%")
             results["aptitude"] = "PASS"
         else:
             print(f"  COMPLETE FAIL - {sc2}: {str(r2)[:200]}")
-            results["aptitude"] = f"PASS (start) / FAIL complete ({sc2})"
+            results["aptitude"] = f"PASS(start)/FAIL(complete) {sc2}"
+    else:
+        print("  WARN: 0 questions returned")
+        results["aptitude"] = "FAIL (0 questions)"
 else:
-    print(f"  FAIL - Status {status}: {str(res)[:300]}")
-    results["aptitude"] = f"FAIL ({status})"
+    print(f"  FAIL - Status {status}: {str(res)[:400]}")
+    results["aptitude"] = f"FAIL ({status}): {str(res)[:100]}"
 
 # ── TECHNICAL (C) ──────────────────────────────────────────
 print("\n[3] TECHNICAL MODULE - C")
 status, res = post("/v1/technical/c/sessions/start", {
-    "topic": "pointers",
+    "topic": "c_pointers",
     "difficulty": "easy",
     "questionType": "mcq",
     "count": 2
@@ -113,12 +128,10 @@ if status == 200 and isinstance(res, dict):
     if qcount > 0 and res.get("questions"):
         q0 = res["questions"][0]
         print(f"  First Q: {str(q0.get('question','?'))[:80]}")
-        opts = q0.get('options', [])
-        print(f"  Options: {opts}")
     results["technical_c"] = "PASS"
 else:
-    print(f"  FAIL - Status {status}: {str(res)[:300]}")
-    results["technical_c"] = f"FAIL ({status})"
+    print(f"  FAIL - Status {status}: {str(res)[:400]}")
+    results["technical_c"] = f"FAIL ({status}): {str(res)[:100]}"
 
 # ── TECHNICAL (Python) ─────────────────────────────────────
 print("\n[3b] TECHNICAL MODULE - Python")
@@ -133,8 +146,8 @@ if status == 200 and isinstance(res, dict):
     print(f"  PASS - Session: {res.get('sessionId')}, Questions: {qcount}")
     results["technical_python"] = "PASS"
 else:
-    print(f"  FAIL - Status {status}: {str(res)[:300]}")
-    results["technical_python"] = f"FAIL ({status})"
+    print(f"  FAIL - Status {status}: {str(res)[:400]}")
+    results["technical_python"] = f"FAIL ({status}): {str(res)[:100]}"
 
 # ── ASSESSMENT ─────────────────────────────────────────────
 print("\n[4] ASSESSMENT MODULE")
@@ -143,20 +156,36 @@ if sc_list == 200 and isinstance(r_list, list):
     print(f"  LIST PASS - {len(r_list)} assessments")
     if r_list:
         a = r_list[0]
-        aid = a.get("id") or a.get("assessment_id")
+        aid = a.get("assessmentId") or a.get("id")
         print(f"  First: {str(a.get('title','?'))!r} (id={aid})")
         sc_s, r_s = post(f"/v1/assessments/{aid}/sessions", {})
         if sc_s == 200 and isinstance(r_s, dict):
             qs = r_s.get("questions", [])
-            sid = r_s.get("id") or r_s.get("sessionId") or r_s.get("session_id")
+            sid = r_s.get("sessionId")
             print(f"  START PASS - Session: {sid}, Questions: {len(qs)}")
-            results["assessment"] = "PASS"
+            # Test submitting an answer
+            if qs:
+                qid = qs[0].get("questionId")
+                sc_a, r_a = post(f"/v1/assessments/sessions/{sid}/answers", {
+                    "sessionId": sid,
+                    "questionId": qid,
+                    "selectedOption": 0,
+                    "state": "answered"
+                })
+                print(f"  ANSWER: {sc_a} - {str(r_a)[:80]}")
+                # Submit
+                sc_sub, r_sub = post(f"/v1/assessments/sessions/{sid}/submit", {})
+                if sc_sub == 200:
+                    print(f"  SUBMIT PASS - Status: {r_sub.get('status')}")
+                    results["assessment"] = "PASS"
+                else:
+                    print(f"  SUBMIT FAIL - {sc_sub}: {str(r_sub)[:100]}")
+                    results["assessment"] = f"PASS(start)/FAIL(submit) {sc_sub}"
+            else:
+                results["assessment"] = "PASS (no questions to submit)"
         else:
             print(f"  START FAIL - {sc_s}: {str(r_s)[:200]}")
-            results["assessment"] = f"PASS (list) / FAIL start ({sc_s})"
-    else:
-        print("  No assessments available")
-        results["assessment"] = "PASS (list empty)"
+            results["assessment"] = f"PASS(list)/FAIL(start) {sc_s}"
 else:
     print(f"  LIST FAIL - {sc_list}: {str(r_list)[:300]}")
     results["assessment"] = f"FAIL ({sc_list})"
