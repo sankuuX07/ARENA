@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from datetime import datetime
 from app.schemas.assessment import (
-    Assessment, AssessmentSession, AssessmentAnswer, 
+    Assessment, AssessmentSession, AssessmentAnswer,
     AssessmentStatusResponse, AssessmentResult, QuestionResult
 )
 from app.services.assessment_service import assessment_service
@@ -11,27 +11,20 @@ from app.core.firebase_auth import verify_firebase_token
 
 router = APIRouter()
 
+# ------------------------------------------------------------------
+# CRITICAL: All specific/static routes MUST be declared BEFORE
+# parameterized routes like /{assessment_id}.
+# FastAPI matches routes top-to-bottom; /{assessment_id} would shadow
+# /sessions/*, /results/* etc if placed first.
+# ------------------------------------------------------------------
+
+# ── List all assessments ──────────────────────────────────────────
 @router.get("", response_model=List[Assessment])
 @router.get("/", response_model=List[Assessment])
 async def get_assessments(uid: str = Depends(verify_firebase_token)):
     return assessment_service.get_assessments()
 
-@router.get("/{assessment_id}", response_model=Assessment)
-async def get_assessment(assessment_id: str, uid: str = Depends(verify_firebase_token)):
-    assessment = assessment_service.get_assessment(assessment_id)
-    if not assessment:
-        raise HTTPException(status_code=404, detail="Assessment not found")
-    return assessment
-
-@router.post("/{assessment_id}/sessions", response_model=AssessmentSession)
-async def start_session(assessment_id: str, uid: str = Depends(verify_firebase_token)):
-    try:
-        return assessment_service.start_session(uid, assessment_id)
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+# ── Session routes (MUST be before /{assessment_id}) ─────────────
 @router.get("/sessions/{session_id}", response_model=AssessmentSession)
 async def get_session(session_id: str, uid: str = Depends(verify_firebase_token)):
     try:
@@ -76,9 +69,17 @@ async def get_session_status(session_id: str, uid: str = Depends(verify_firebase
     except ValueError as ve:
         raise HTTPException(status_code=404, detail=str(ve))
 
+# ── Results routes (MUST be before /{assessment_id}) ─────────────
 @router.get("/results/history", response_model=List[AssessmentResult])
 async def get_history(uid: str = Depends(verify_firebase_token)):
     return assessment_result_service.get_history(uid)
+
+@router.get("/results/{result_id}/review", response_model=List[QuestionResult])
+async def get_result_review(result_id: str, uid: str = Depends(verify_firebase_token)):
+    rev = assessment_result_service.get_review(result_id, uid)
+    if rev is None:
+        raise HTTPException(status_code=404, detail="Review not found")
+    return rev
 
 @router.get("/results/{result_id}", response_model=AssessmentResult)
 async def get_result(result_id: str, uid: str = Depends(verify_firebase_token)):
@@ -87,9 +88,19 @@ async def get_result(result_id: str, uid: str = Depends(verify_firebase_token)):
         raise HTTPException(status_code=404, detail="Result not found")
     return res
 
-@router.get("/results/{result_id}/review", response_model=List[QuestionResult])
-async def get_result_review(result_id: str, uid: str = Depends(verify_firebase_token)):
-    rev = assessment_result_service.get_review(result_id, uid)
-    if rev is None:
-        raise HTTPException(status_code=404, detail="Review not found")
-    return rev
+# ── Assessment detail + session start (parameterized — MUST be last) ──
+@router.get("/{assessment_id}", response_model=Assessment)
+async def get_assessment(assessment_id: str, uid: str = Depends(verify_firebase_token)):
+    assessment = assessment_service.get_assessment(assessment_id)
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    return assessment
+
+@router.post("/{assessment_id}/sessions", response_model=AssessmentSession)
+async def start_session(assessment_id: str, uid: str = Depends(verify_firebase_token)):
+    try:
+        return assessment_service.start_session(uid, assessment_id)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

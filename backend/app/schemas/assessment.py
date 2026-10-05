@@ -173,8 +173,10 @@ class AssessmentSession(BaseModel):
     startedAt: Optional[str] = None
     submittedAt: Optional[str] = None
     expiresAt: Optional[str] = None
+    metadata: Optional[dict] = None
     answers: List[AssessmentAnswer] = []
     questions: List[AssessmentQuestionReference] = []
+
 
 class AssessmentSubmitRequest(BaseModel):
     pass # Empty, backend derives everything

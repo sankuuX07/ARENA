@@ -29,9 +29,13 @@ class VerbalService:
             difficulty=request.difficulty
         )
         
-        raw_response = await gemini_service.generate_communication_response(
-            message=prompt,
-            mode="aptitude"
+        raw_response = await gemini_service.generate_json_response(
+            system_instruction=(
+                "You are an expert verbal ability question generator for placement exams. "
+                "Generate multiple-choice questions as a JSON array. "
+                "Respond ONLY with a valid JSON array, no other text."
+            ),
+            message=prompt
         )
         
         questions = self._parse_questions(raw_response, request.num_questions, request.topic)
@@ -92,35 +96,44 @@ class VerbalService:
         )
 
     def _parse_questions(self, raw_response: str, expected_count: int, topic: str) -> List[VerbalQuestion]:
+        import re
         try:
-            clean_json_str = raw_response
-            if "```json" in raw_response:
-                clean_json_str = raw_response.split("```json")[1].split("```")[0].strip()
-            elif "```" in raw_response:
-                clean_json_str = raw_response.split("```")[1].split("```")[0].strip()
-                
-            data = json.loads(clean_json_str)
+            text = raw_response.strip()
+            md = re.search(r'```(?:json)?\s*(.*?)\s*```', text, re.DOTALL)
+            if md:
+                text = md.group(1).strip()
+            start = text.find('[')
+            end = text.rfind(']')
+            if start == -1 or end == -1:
+                raise ValueError("No JSON array found")
+            data = json.loads(text[start:end+1])
             questions = []
             for item in data:
-                # Basic validation
-                if len(item.get("options", [])) != 4:
+                if not isinstance(item, dict):
                     continue
-                if not isinstance(item.get("correctOption"), int) or item["correctOption"] not in [0, 1, 2, 3]:
+                options = item.get("options", [])
+                if not isinstance(options, list) or len(options) != 4:
                     continue
-                
+                correct = item.get("correctOption")
+                if correct is None and "answer" in item:
+                    try:
+                        correct = int(item["answer"])
+                        if correct in [1,2,3,4]:
+                            correct -= 1
+                    except (ValueError, TypeError):
+                        continue
+                if not isinstance(correct, int) or correct not in [0,1,2,3]:
+                    continue
                 q = VerbalQuestion(
                     question_id=f"q_{uuid.uuid4().hex[:8]}",
                     question=item["question"],
-                    options=item["options"],
-                    correctOption=item["correctOption"],
+                    options=[str(o) for o in options],
+                    correctOption=correct,
                     explanation=item.get("explanation", "No explanation provided.")
                 )
                 questions.append(q)
-                
-            # If AI didn't generate enough, duplicate for now to meet count (fallback)
-            while len(questions) < expected_count and len(questions) > 0:
-                questions.append(questions[0].copy(update={"question_id": f"q_{uuid.uuid4().hex[:8]}"}))
-                
+            if not questions:
+                raise ValueError("No valid questions parsed")
             return questions[:expected_count]
         except Exception as e:
             logger.warning(f"Failed to parse AI verbal questions JSON: {e}")

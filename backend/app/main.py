@@ -4,16 +4,27 @@ from app.core.config import settings
 from app.api.v1.router import api_router
 from app.core.security_middleware import SecurityMiddleware
 
-import firebase_admin
 import logging
 
+# firebase_admin is optional in development. In production, set GOOGLE_APPLICATION_CREDENTIALS.
 try:
-    firebase_admin.initialize_app()
-    logging.info("Firebase Admin initialized successfully.")
-except ValueError:
-    pass # Already initialized
-except Exception as e:
-    logging.warning(f"Failed to initialize Firebase Admin: {e}. Backend authentication will require GOOGLE_APPLICATION_CREDENTIALS.")
+    import firebase_admin
+    try:
+        firebase_admin.initialize_app()
+        logging.info("Firebase Admin initialized successfully.")
+    except ValueError:
+        pass  # Already initialized
+    except Exception as e:
+        logging.warning(
+            f"Firebase Admin init failed: {e}. "
+            "Backend will use local-dev-token auth bypass in development mode."
+        )
+except ImportError:
+    logging.warning(
+        "firebase_admin not fully installed or missing google deps. "
+        "Running in local-dev mode only. Install firebase-admin for production."
+    )
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

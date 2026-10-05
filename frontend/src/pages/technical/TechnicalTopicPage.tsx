@@ -11,8 +11,8 @@ export const TechnicalTopicPage: React.FC = () => {
   const [difficulty, setDifficulty] = useState<TechnicalDifficulty>('medium');
 
   const handleStart = () => {
-    // Navigating directly to session page with query params to start session
-    navigate(`/technical/session/new?language=${language}&topic=${topicId}&difficulty=${difficulty}`);
+    // Navigate to session page with query params — count=5 AI-generated questions
+    navigate(`/technical/session/new?language=${language}&topic=${topicId}&difficulty=${difficulty}&count=5`);
   };
 
   return (
