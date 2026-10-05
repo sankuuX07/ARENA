@@ -39,9 +39,14 @@ class AptitudeService:
                 difficulty=request.difficulty
             )
         
-        raw_response = await gemini_service.generate_communication_response(
-            message=prompt,
-            mode="aptitude"
+        system_instruction = (
+            "You are an expert aptitude question generator for a placement preparation platform. "
+            "Your task is to generate multiple-choice questions as a JSON array. "
+            "Respond ONLY with a valid JSON array. Do not include any text outside the JSON."
+        )
+        raw_response = await gemini_service.generate_json_response(
+            system_instruction=system_instruction,
+            message=prompt
         )
         
         questions = self._parse_questions(raw_response, request.num_questions)

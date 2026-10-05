@@ -1,14 +1,18 @@
 import uuid
 import json
+import logging
 from datetime import datetime
 from typing import List, Dict, Optional
 from app.schemas.technical import (
-    TechnicalLanguage, TechnicalTopic, TechnicalModule, 
-    TechnicalQuestion, TechnicalSession, TechnicalAnswerRequest, TechnicalAnswerResponse, TechnicalResult,
+    TechnicalLanguage, TechnicalTopic, TechnicalModule,
+    TechnicalQuestion, ClientTechnicalQuestion, TechnicalSession, ClientTechnicalSession,
+    TechnicalAnswerRequest, TechnicalAnswerResponse, TechnicalResult,
     TechnicalDifficulty, TechnicalQuestionType
 )
 from app.services.gemini_service import gemini_service
 from app.services.prompts.technical_prompts import get_technical_question_prompt
+
+logger = logging.getLogger(__name__)
 
 # Foundation architecture static data for M21
 MOCK_MODULES = [
@@ -114,35 +118,44 @@ class TechnicalService:
             raise ValueError("Failed to generate a valid technical question. Please try again.")
 
     async def start_session(
-        self, 
-        uid: str, 
-        language: TechnicalLanguage, 
-        topic: str, 
-        difficulty: TechnicalDifficulty, 
+        self,
+        uid: str,
+        language: TechnicalLanguage,
+        topic: str,
+        difficulty: TechnicalDifficulty,
         count: int = 5
-    ) -> TechnicalSession:
+    ) -> ClientTechnicalSession:
+        """
+        Generate `count` questions via Ollama/Gemma, store full questions (with
+        correctOption) server-side, and return ClientTechnicalSession (no answers).
+        """
+        count = max(1, min(count, 10))  # Clamp 1-10
+        questions: List[TechnicalQuestion] = []
         
-        # In M21, we dynamically generate one question to prove the architecture.
-        # Future milestones will pull from a vast pre-generated static bank or dynamic batches.
-        questions = []
-        try:
-            # Generate one MCQ for the architecture foundation
-            q = await self.generate_technical_question(language, topic, difficulty, TechnicalQuestionType.mcq)
-            questions.append(q)
-        except ValueError:
-            # Fallback if AI fails during demo
-            q = TechnicalQuestion(
-                questionId=f"tech_q_{uuid.uuid4().hex[:8]}",
-                language=language,
-                topic=topic,
-                difficulty=difficulty,
-                questionType=TechnicalQuestionType.mcq,
-                question="What is the primary purpose of this topic?",
-                options=["Option A", "Option B", "Option C", "Option D"],
-                correctOption=0,
-                explanation="This is a foundational architecture fallback question."
-            )
-            questions.append(q)
+        for i in range(count):
+            try:
+                q = await self.generate_technical_question(
+                    language, topic, difficulty, TechnicalQuestionType.mcq
+                )
+                questions.append(q)
+            except ValueError as ve:
+                logger.warning(f"Q{i+1} generation failed: {ve}")
+                # Only add a fallback if we have NO questions at all
+                if i == 0 and not questions:
+                    questions.append(TechnicalQuestion(
+                        questionId=f"tech_q_{uuid.uuid4().hex[:8]}",
+                        language=language,
+                        topic=topic,
+                        difficulty=difficulty,
+                        questionType=TechnicalQuestionType.mcq,
+                        question=f"What is a fundamental concept in {topic} for {language.value.upper()}?",
+                        options=["Concept A", "Concept B", "Concept C", "Concept D"],
+                        correctOption=0,
+                        explanation="AI service is temporarily unavailable. This is a placeholder question."
+                    ))
+        
+        if not questions:
+            raise ValueError("Failed to generate any technical questions. Please try again.")
 
         session = TechnicalSession(
             sessionId=f"tsession_{uuid.uuid4().hex[:10]}",
@@ -150,16 +163,43 @@ class TechnicalService:
             language=language,
             topic=topic,
             difficulty=difficulty,
-            questionCount=len(questions), # Actual count generated
+            questionCount=len(questions),
             startedAt=datetime.utcnow().isoformat() + "Z",
             questions=questions
         )
-        
+
         if uid not in self._sessions:
             self._sessions[uid] = []
         self._sessions[uid].append(session)
-        
-        return session
+
+        # Strip correct answers before returning to client
+        client_questions = [
+            ClientTechnicalQuestion(
+                questionId=q.questionId,
+                language=q.language,
+                topic=q.topic,
+                difficulty=q.difficulty,
+                questionType=q.questionType,
+                question=q.question,
+                codeSnippet=q.codeSnippet,
+                options=q.options,
+            )
+            for q in questions
+        ]
+
+        return ClientTechnicalSession(
+            sessionId=session.sessionId,
+            uid=session.uid,
+            language=session.language,
+            topic=session.topic,
+            difficulty=session.difficulty,
+            questionCount=session.questionCount,
+            currentQuestionIndex=0,
+            score=0,
+            status="active",
+            startedAt=session.startedAt,
+            questions=client_questions,
+        )
 
     def get_session(self, uid: str, session_id: str) -> Optional[TechnicalSession]:
         for s in self._sessions.get(uid, []):
