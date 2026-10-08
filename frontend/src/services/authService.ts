@@ -20,6 +20,9 @@ export const getFriendlyErrorMessage = (error: any): string => {
   if (code.includes('auth/email-already-in-use')) {
     return 'An account with this email already exists.';
   }
+  if (code.includes('auth/api-key-not-valid')) {
+    return 'Invalid Firebase API Key. Please check your configuration.';
+  }
   if (
     code.includes('auth/wrong-password') ||
     code.includes('auth/user-not-found') ||
