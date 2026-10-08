@@ -17,13 +17,10 @@ async def verify_firebase_token(
     In production, requires a real Firebase ID token.
     """
     if not authorization or not authorization.startswith("Bearer "):
-        if settings.ENVIRONMENT == "production":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Missing or invalid authorization header.",
-            )
-        # In dev mode without a token, allow anonymous for health checks only
-        return "student-authenticated-uid"
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid authorization header.",
+        )
 
     token = authorization.split("Bearer ", 1)[1].strip()
 
@@ -31,19 +28,6 @@ async def verify_firebase_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Empty authorization token.",
-        )
-
-    # ── Development local-auth bypass ─────────────────────────────────────────
-    # Frontend sends 'local-dev-token-{uid}' when VITE_AUTH_MODE=local.
-    # This is ONLY accepted outside production.
-    if settings.ENVIRONMENT != "production" and token.startswith("local-dev-token-"):
-        uid = token[len("local-dev-token-"):]
-        if uid:
-            logger.debug(f"[Auth] Local-dev bypass accepted for uid={uid}")
-            return uid
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid local dev token format — missing UID suffix.",
         )
 
     # ── Production Firebase token verification ────────────────────────────────
