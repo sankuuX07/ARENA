@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 class AptitudeService:
     def __init__(self):
         self._sessions: Dict[str, List[AptitudeQuestion]] = {}
+        self._results: List[AptitudeSessionSummary] = []
 
     async def start_session(self, request: AptitudeStartRequest) -> AptitudeStartResponse:
         session_id = f"apt_{uuid.uuid4().hex[:10]}"
@@ -91,7 +92,7 @@ class AptitudeService:
         score = correct
         accuracy = round((correct / total_questions) * 100) if total_questions > 0 else 0
         
-        return AptitudeSessionSummary(
+        summary = AptitudeSessionSummary(
             session_id=request.session_id,
             category=request.category,
             topic=request.topic,
@@ -106,8 +107,10 @@ class AptitudeService:
             completed_at=datetime.utcnow().isoformat() + "Z",
             questions_with_answers=real_questions
         )
-        # Clear session from memory after building result
+        # Store result and clear session from memory after building result
+        self._results.append(summary)
         self._sessions.pop(request.session_id, None)
+        return summary
 
     def _parse_questions(self, raw_response: str, expected_count: int) -> List[AptitudeQuestion]:
         import re
