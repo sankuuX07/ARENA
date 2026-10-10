@@ -48,6 +48,7 @@ class AptitudeSessionCompleteRequest(BaseModel):
     answers: dict[str, int] # question_id -> selected_option
 
 class AptitudeSessionSummary(BaseModel):
+    uid: str
     session_id: str
     category: str
     topic: Optional[str] = None

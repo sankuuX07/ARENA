@@ -93,6 +93,7 @@ class AptitudeService:
         accuracy = round((correct / total_questions) * 100) if total_questions > 0 else 0
         
         summary = AptitudeSessionSummary(
+            uid=request.uid,
             session_id=request.session_id,
             category=request.category,
             topic=request.topic,

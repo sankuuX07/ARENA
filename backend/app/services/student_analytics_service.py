@@ -73,22 +73,22 @@ class StudentAnalyticsService:
         
         # Assessments
         assessments_history = assessment_result_service.get_history(user_id)
-        assessments_scores = [r.percentage for r in assessments_history if r.percentage is not None]
+        assessments_scores = [getattr(r, 'percentage', None) for r in assessments_history if getattr(r, 'percentage', None) is not None]
         assessments_score = sum(assessments_scores)/len(assessments_scores) if assessments_scores else None
 
         # Interviews
-        interviews_history = [s for s in interview_service._sessions.values() if s.userId == user_id]
-        interviews_scores = [s.overallScore for s in interviews_history if s.overallScore is not None]
+        interviews_history = [s for s in interview_service._sessions.values() if getattr(s, 'userId', None) == user_id]
+        interviews_scores = [getattr(s, 'overallScore', None) for s in interviews_history if getattr(s, 'overallScore', None) is not None]
         interviews_score = sum(interviews_scores)/len(interviews_scores) if interviews_scores else None
 
         # Resume
         resume_history = resume_improvement_service.get_user_sessions(user_id)
-        resume_scores = [s.originalScore for s in resume_history if s.originalScore is not None]
+        resume_scores = [getattr(s, 'originalScore', None) for s in resume_history if getattr(s, 'originalScore', None) is not None]
         resume_score = sum(resume_scores)/len(resume_scores) if resume_scores else None
 
         # Aptitude
-        aptitude_history = [s for s in aptitude_service._results if s.userId == user_id] if hasattr(aptitude_service, '_results') else []
-        aptitude_scores = [s.accuracy for s in aptitude_history if s.accuracy is not None]
+        aptitude_history = [s for s in aptitude_service._results if getattr(s, 'uid', getattr(s, 'userId', None)) == user_id] if hasattr(aptitude_service, '_results') else []
+        aptitude_scores = [getattr(s, 'accuracy', None) for s in aptitude_history if getattr(s, 'accuracy', None) is not None]
         aptitude_score = sum(aptitude_scores)/len(aptitude_scores) if aptitude_scores else None
 
         # Technical (C, C++, Java, Python, CS Core)

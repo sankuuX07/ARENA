@@ -60,7 +60,7 @@ export const StudentAnalyticsOverviewPage: React.FC = () => {
     );
   }
 
-  if (!overview) return (
+  if (!overview || overview.coverage.exploredCategories === 0) return (
     <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
       <div style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>No data available yet.</div>
       <div>Complete some practice sessions to see your analytics here.</div>
